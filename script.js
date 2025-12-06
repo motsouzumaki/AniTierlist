@@ -220,6 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
             box.appendChild(nameDiv);
             const itemsDiv = document.createElement('div');
             itemsDiv.className = 'items';
+            itemsDiv.dataset.tierIndex = index;
             tier.items.forEach(item => itemsDiv.appendChild(createDraggableImage(item, { tierIndex: index })));
             itemsDiv.addEventListener('dragover', handleDragOver);
             itemsDiv.addEventListener('drop', (e) => handleDrop(e, { tierIndex: index }));
@@ -242,9 +243,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function createDraggableImage(item, source) {
         const wrapper = document.createElement('div');
         wrapper.className = 'album group';
+        // HARDENED TOUCH SETTINGS:
+        wrapper.style.touchAction = 'none';
+        wrapper.style.userSelect = 'none';
+        wrapper.style.webkitUserSelect = 'none';
+
         const img = document.createElement('img');
         img.src = item.img;
-        img.draggable = true;
+        img.draggable = true; // Keep true for Mouse Drag
+        // Prevent native touch actions on image too
+        img.style.touchAction = 'none';
+        img.style.webkitUserDrag = 'none'; // Webkit specific disable
+        img.style.userSelect = 'none';
+
         const tooltip = document.createElement('div');
         tooltip.className = 'absolute bottom-0 left-0 right-0 bg-black/80 text-white text-[10px] p-1 opacity-0 group-hover:opacity-100 transition-opacity truncate text-center pointer-events-none';
         tooltip.textContent = item.title;
@@ -256,7 +267,171 @@ document.addEventListener('DOMContentLoaded', () => {
             img.classList.add('dragging');
         });
         img.addEventListener('dragend', () => img.classList.remove('dragging'));
+
+        // Touch Events explicitly on wrapper for better capture
+        wrapper.addEventListener('touchstart', (e) => handleTouchStart(e, item, source), { passive: false });
+        wrapper.addEventListener('touchmove', handleTouchMove, { passive: false });
+        wrapper.addEventListener('touchend', handleTouchEnd);
+
         return wrapper;
+    }
+
+    // Touch Handling Variables
+    let touchDragItem = null; // The visual clone
+    let touchDragOffsetX = 0;
+    let touchDragOffsetY = 0;
+
+    function handleTouchStart(e, item, source) {
+        if (e.touches.length > 1) return;
+        e.preventDefault();
+
+        const target = e.target;
+        const wrapper = target.closest('.album');
+        if (!wrapper) return;
+
+        // Disable native drag on the image to prevent conflict
+        const imgEl = wrapper.querySelector('img');
+        if (imgEl) imgEl.draggable = false;
+
+        draggedItem = item;
+        draggedFrom = source;
+
+        const touch = e.touches[0];
+        const rect = wrapper.getBoundingClientRect();
+
+        touchDragOffsetX = touch.clientX - rect.left;
+        touchDragOffsetY = touch.clientY - rect.top;
+
+        // GHOST STRATEGY: Create a fresh visual ghost instead of deep cloning
+        // This avoids inheriting context-specific styles (like opacity transitions) that might hide the element
+        const ghost = document.createElement('div');
+        ghost.style.position = 'fixed';
+        ghost.style.left = rect.left + 'px';
+        ghost.style.top = rect.top + 'px';
+        ghost.style.width = rect.width + 'px';
+        ghost.style.height = rect.height + 'px';
+        ghost.style.zIndex = '2147483647'; // Max Z-Index
+        ghost.style.pointerEvents = 'none';
+        ghost.style.transform = 'scale(1.1)';
+        ghost.style.borderRadius = '4px';
+        ghost.style.boxShadow = '0 0 15px #00dfff'; // Strong glow
+        ghost.style.border = '2px solid #00dfff';
+        ghost.style.overflow = 'hidden';
+        ghost.style.backgroundColor = '#17212b'; // Background in case image transparent
+
+        const ghostImg = document.createElement('img');
+        ghostImg.src = item.img;
+        ghostImg.style.width = '100%';
+        ghostImg.style.height = '100%';
+        ghostImg.style.objectFit = 'cover';
+        ghostImg.style.display = 'block';
+
+        ghost.appendChild(ghostImg);
+        document.body.appendChild(ghost);
+        touchDragItem = ghost;
+
+        // Visual feedback on the source element
+        wrapper.classList.add('opacity-20');
+    }
+
+    function handleTouchMove(e) {
+        if (!touchDragItem) return;
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        const newX = touch.clientX - touchDragOffsetX;
+        const newY = touch.clientY - touchDragOffsetY;
+
+        touchDragItem.style.left = newX + 'px';
+        touchDragItem.style.top = newY + 'px';
+    }
+
+    function handleTouchEnd(e) {
+        if (!touchDragItem) return;
+        e.preventDefault();
+
+        // 1. Identify drop target through the clone/pointer
+        const touch = e.changedTouches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+
+        // Remove the clone
+        if (touchDragItem && touchDragItem.parentNode === document.body) {
+            document.body.removeChild(touchDragItem);
+        }
+        touchDragItem = null;
+
+        // 2. Determine Destination
+        let destination = null;
+
+        if (target) {
+            const poolContainer = target.closest('#pool-items');
+            const itemsContainer = target.closest('.items');
+
+            if (poolContainer) {
+                destination = 'pool';
+            } else if (itemsContainer && itemsContainer.dataset.tierIndex !== undefined) {
+                destination = { tierIndex: parseInt(itemsContainer.dataset.tierIndex) };
+            }
+        }
+
+        // 3. Execute Drop
+        if (destination) {
+            // Remove from source
+            if (draggedFrom === 'pool') {
+                pool = pool.filter(i => i.id !== draggedItem.id);
+            } else if (typeof draggedFrom === 'object') {
+                const sourceTier = tiers[draggedFrom.tierIndex];
+                if (sourceTier) {
+                    sourceTier.items = sourceTier.items.filter(i => i.id !== draggedItem.id);
+                }
+            }
+
+            // Add to destination
+            if (destination === 'pool') {
+                pool.push(draggedItem);
+            } else if (typeof destination === 'object') {
+                const destTier = tiers[destination.tierIndex];
+
+                let insertIndex = destTier.items.length;
+                const itemsContainer = tierContainer.children[destination.tierIndex].querySelector('.items');
+
+                // For logic, we need to compare against static items.
+                // Since we used a CLONE, the original item is still in the DOM (just transparent).
+                // We should EXCLUDE it from calculation to avoid self-reference madness.
+                const itemElements = Array.from(itemsContainer.children).filter(el => {
+                    return !el.classList.contains('opacity-20');
+                });
+
+                for (let i = 0; i < itemElements.length; i++) {
+                    const rect = itemElements[i].getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    if (touch.clientX < centerX) {
+                        insertIndex = i;
+                        break;
+                    }
+                }
+
+                destTier.items.splice(insertIndex, 0, draggedItem);
+            }
+            // Manual save matching existing logic
+            // (Note: user removed saveState call in previous turn, but we must ensure state persists differently? 
+            // The original handleDrop had saveState() commented out in my earlier view? No, it called `saveState()`.
+            // Wait, I removed `saveState()` in step 29 explicitly.
+            // I should respect that or re-add it if needed.
+            // Actually, handleDrop calls saveState?
+            // Let's check view_file from step 8 lines 681.
+            // "renderTiers(); renderPool();"
+            // It does NOT call saveState at end of handleDrop inside the snippet I saw?
+            // Wait, I saw "saveState(); // Ensure state is saved after move" in step 25.
+            // Then I removed it in step 29.
+            // So I will NOT add it here.)
+        }
+
+        // 4. Reset & Render
+        draggedItem = null;
+        draggedFrom = null;
+        renderTiers();
+        renderPool();
     }
 
     // Search
