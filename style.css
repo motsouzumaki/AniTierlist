@@ -1,0 +1,428 @@
+/* Base Styles & AniRanker Vibe */
+body {
+    background-color: #17212b;
+}
+
+/* Custom Scanline Effect */
+.scanlines {
+    background: repeating-linear-gradient(0deg,
+            rgba(0, 0, 0, 0.15),
+            rgba(0, 0, 0, 0.15) 1px,
+            transparent 1px,
+            transparent 2px);
+    pointer-events: none;
+}
+
+/* Background Grid Pattern */
+.bg-grid {
+    background-image:
+        linear-gradient(rgba(0, 223, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 223, 255, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Custom Scrollbar Styling */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #17212b;
+    border: 1px solid rgba(0, 223, 255, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #00dfff 0%, #00a8cc 100%);
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #00ffea 0%, #00dfff 100%);
+}
+
+/* Firefox Scrollbar */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #00dfff #17212b;
+}
+
+/* Tier Box Styling (Glassmorphism) */
+.box {
+    display: flex;
+    min-height: 120px;
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 0.3s;
+}
+
+.box:hover {
+    border-color: rgba(0, 223, 255, 0.5);
+}
+
+.box .name {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    flex-shrink: 0;
+    color: black;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.5rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.box .items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+    width: 100%;
+    align-items: center;
+}
+
+/* Draggable Items */
+.album {
+    width: 80px;
+    height: 110px;
+    cursor: grab;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid transparent;
+}
+
+.album:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(0, 223, 255, 0.5);
+    border-color: #00dfff;
+    z-index: 10;
+}
+
+.album:active {
+    cursor: grabbing;
+}
+
+.album img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.dragging {
+    opacity: 0.5;
+    border: 2px dashed #00dfff;
+}
+
+/* Search Result Items - Vertical Card Layout */
+.search-result-card {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-result-card:hover {
+    border-color: #00dfff;
+    box-shadow: 0 0 5px rgba(0, 223, 255, 0.3);
+}
+
+/* Search Results Grid Layout - 10 columns with no stretching */
+#search-results,
+#sync-results,
+#season-results {
+    display: grid !important;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 8px;
+    overflow-y: auto;
+    align-items: start;
+    align-content: start;
+    max-height: 400px;
+}
+
+#search-results > div,
+#sync-results > div,
+#season-results > div {
+    width: 100%;
+    box-sizing: border-box;
+    height: auto;
+}
+
+@media (max-width: 1200px) {
+    #search-results,
+    #sync-results,
+    #season-results {
+        grid-template-columns: repeat(8, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    #search-results,
+    #sync-results,
+    #season-results {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    #search-results,
+    #sync-results,
+    #season-results {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* --- Global Filter Controls Layout Fix --- */
+#global-filter-controls,
+#global-filter-controls-sync,
+#global-filter-controls-seasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 223, 255, 0.3);
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.sort-controls-group {
+    display: flex;
+    gap: 5px;
+    flex: 0 0 auto;
+}
+
+#global-filter-controls select,
+#global-filter-controls-sync select,
+#global-filter-controls-seasons select {
+    box-sizing: border-box;
+    min-width: 120px;
+    flex: 1;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 223, 255, 0.5);
+    color: white;
+    padding: 0.25rem;
+    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+#global-filter-controls select:focus,
+#global-filter-controls-sync select:focus,
+#global-filter-controls-seasons select:focus {
+    outline: none;
+    border-color: #00dfff;
+}
+
+#global-filter-controls select:hover,
+#global-filter-controls-sync select:hover,
+#global-filter-controls-seasons select:hover {
+    border-color: #00dfff;
+}
+
+#global-filter-controls select option,
+#global-filter-controls-sync select option,
+#global-filter-controls-seasons select option {
+    background-color: #17212b;
+    color: white;
+}
+
+.filter-title-input {
+    flex: 1 1 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 223, 255, 0.5);
+    color: white;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    border-radius: 2px;
+}
+
+.filter-title-input:focus {
+    outline: none;
+    border-color: #00dfff;
+}
+
+.filter-title-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#tier-list-container-wrapper {
+    width: 100%;
+}
+
+#top-control-panel > div {
+    min-width: 0;
+}
+
+/* Settings Modal - Tier Row Styling */
+.tier-setting-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 0, 255, 0.2);
+    border-radius: 6px;
+}
+
+.tier-setting-row:hover {
+    border-color: rgba(255, 0, 255, 0.5);
+}
+
+.tier-color-preview {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+}
+
+.tier-name-input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 0, 255, 0.3);
+    color: white;
+    padding: 8px 12px;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.2rem;
+    text-align: center;
+    border-radius: 4px;
+}
+
+.tier-name-input:focus {
+    outline: none;
+    border-color: #FF00FF;
+}
+
+.tier-color-input {
+    width: 50px;
+    height: 40px;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    border-radius: 4px;
+}
+
+.tier-color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.tier-color-input::-webkit-color-swatch {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+/* Layout Toggle Button */
+.layout-toggle-btn {
+    background: rgba(0, 223, 255, 0.2);
+    border: 1px solid rgba(0, 223, 255, 0.5);
+    color: #00dfff;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-radius: 4px;
+}
+
+.layout-toggle-btn:hover {
+    background: #00dfff;
+    color: black;
+}
+
+.layout-toggle-btn.list-active {
+    background: #00dfff;
+    color: black;
+}
+
+/* List View Mode - 3 columns on PC, 1 on mobile */
+#search-results.list-view,
+#sync-results.list-view,
+#season-results.list-view {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px;
+}
+
+/* List view cards - horizontal layout */
+#search-results.list-view .search-result-card,
+#sync-results.list-view .search-result-card,
+#season-results.list-view .search-result-card {
+    flex-direction: row !important;
+}
+
+#search-results.list-view .search-result-card img,
+#sync-results.list-view .search-result-card img,
+#season-results.list-view .search-result-card img {
+    width: 60px !important;
+    height: 85px !important;
+    aspect-ratio: unset !important;
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    #search-results.list-view,
+    #sync-results.list-view,
+    #season-results.list-view {
+        grid-template-columns: 1fr !important;
+    }
+}
+/* List view - image container fixed width */
+#search-results.list-view .search-result-card > div:first-child,
+#sync-results.list-view .search-result-card > div:first-child,
+#season-results.list-view .search-result-card > div:first-child {
+    width: 60px !important;
+    min-width: 60px !important;
+    flex-shrink: 0;
+}
+
+/* List view - disable zoom and hide overlay */
+.list-view .search-result-card img {
+    transform: none !important;
+}
+
+.list-view .search-result-card .absolute {
+    display: none !important;
+}
+
+/* UI Notes Styling */
+.search-note {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.seasons-instructions {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: rgba(0, 223, 255, 0.05);
+    border-left: 3px solid #00dfff;
+}
+
+.seasons-instructions ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+    margin: 0;
+}
+
+.seasons-instructions li {
+    color: #9ca3af;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+
+/* Series Selection Button */
+.select-series-btn {
+    box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
+}
+.select-series-btn:hover {
+    box-shadow: 0 0 15px rgba(147, 51, 234, 0.8);
+}
+

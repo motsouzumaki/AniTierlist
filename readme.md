@@ -1,28 +1,43 @@
-<img src='./public/miko.png' />
+# AniTierlist
 
-Illust by [**Yuku Meow**](https://yukomeow.crd.co/) (check em out if you like it)
+## Overview
+AniTierlist is an easy‑to‑use web app for creating tier lists for **Anime**, **Manga**, and **Characters**. It focuses on fast search, clean layout, and simple drag‑and‑drop tools, without extra complexity.
 
-# About
-**UwU List** is a playful little anime tier list I made — you can search your favorite shows, then drag and drop them into your own rankings. Think colorful columns, **S** to **F**, all wrapped in a **clean**, **snappy UI** built with **next.js** and a bit of love. It’s still early, so features like saving or sharing aren’t live yet, but seeing friends fight over their hot takes is already wild. *Sometimes, just ranking anime is more fun than finishing your plan to watch list.*
+## What You Can Do
+- **Instant Search** – Just type and see results update automatically.
+- **Character Search** – Search by character name or by series title.
+- **Tier List Builder** – Drag items into S–F tiers and rename or recolor tiers.
+- **Export Image** – Save your final tier list as a PNG.
+- **AniList Sync** – Import your AniList lists (Completed, Watching, Planning…).
+- **Season Browser** – Browse anime by season and year.
+- **Filters** – Sort and filter by type, status, gender, and more.
+- **Layout Options** – Switch between grid view and list view.
+- **Mobile Friendly** – Works smoothly on phones and tablets.
+- **Theme Options** – Different neon themes for each section.
 
-# Run yourself 
-You'll need a fairly new v of **node** and **git**!
+## Installation & Usage
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/motsouzumaki/AniTierlist.git
+   cd AniTierlist
+   ```
+2. Launch `index.html` in your browser.
+3. Choose **Anime**, **Manga**, or **Characters**.
+4. Type in the search bar to get instant results.
+5. Press **+ IMPORT** to add items to your pool.
+6. Drag items into the tier list.
+7. Export your list as a PNG.
 
-Fork and **pull**.
-```sh
--> git add origin https://github.com/purpleblueslime/UwuList.git 
--> git pull origin
+## File Structure
+```
+AniTierlist/
+├── index.html          # Main interface (Tailwind CDN integrated)
+├── style.css           # Custom visual effects (scanlines, grid, scrollbars)
+├── script.js           # Application logic & API handling
+└── README.md           # Documentation
 ```
 
-Install **deps/dev deps** from [**`package.json`**](./package.json)
-
-## `dev`
-```sh
--> next dev
-```
-view at port **3k**.
-
-## `build`
-```sh
--> next build
-```
+## Acknowledgments
+- [AniList API](https://anilist.co)
+- [Tailwind CSS](https://tailwindcss.com)
+- [Font Awesome](https://fontawesome.com)

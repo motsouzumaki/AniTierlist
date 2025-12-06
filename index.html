@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AniTierlist - Ultimate Ranker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&family=Jua&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'base-bg': '#17212b',
+                        'neon-blue': '#00dfff',
+                        'neon-pink': '#FF00FF',
+                        'neon-green': '#00FF00',
+                        'dark-panel': '#1e293b',
+                    },
+                    fontFamily: {
+                        'orbitron': ['"Orbitron"', 'sans-serif'],
+                        'mono': ['"JetBrains Mono"', 'monospace'],
+                        'jua': ['"Jua"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon': '0 0 5px #00dfff, 0 0 10px #00dfff',
+                        'neon-hover': '0 0 10px #00dfff, 0 0 20px #00dfff',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-base-bg text-white font-mono min-h-screen overflow-x-hidden relative">
+    <div class="scanlines fixed inset-0 pointer-events-none z-50"></div>
+    <div class="bg-grid fixed inset-0 pointer-events-none z-0 opacity-10"></div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div
+            class="bg-base-bg border-2 border-neon-pink p-6 rounded-lg shadow-[0_0_20px_rgba(255,0,255,0.5)] max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center mb-6 border-b border-neon-pink/30 pb-4">
+                <h2 class="text-2xl font-orbitron text-neon-pink">
+                    <i class="fas fa-cog mr-2"></i>TIER_SETTINGS
+                </h2>
+                <button id="close-settings-btn" class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="tier-settings-container" class="flex flex-col gap-4">
+            </div>
+            <div class="flex gap-4 mt-6 pt-4 border-t border-neon-pink/30">
+                <button id="save-settings-btn"
+                    class="flex-1 bg-neon-pink text-black py-2 px-4 font-bold uppercase hover:bg-white transition-colors rounded">
+                    <i class="fas fa-save mr-2"></i>Save Settings
+                </button>
+                <button id="reset-settings-btn"
+                    class="flex-1 border border-gray-500 text-gray-400 py-2 px-4 font-bold uppercase hover:bg-gray-700 hover:text-white transition-colors rounded">
+                    <i class="fas fa-undo mr-2"></i>Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 relative z-10 max-w-full flex flex-col gap-6">
+        <header
+            class="mb-4 border-b-2 border-neon-blue pb-4 flex flex-col sm:flex-row justify-between items-center gap-4 bg-base-bg/80 backdrop-blur-sm sticky top-0 z-40 px-2">
+            <h1
+                class="text-3xl sm:text-4xl font-orbitron font-bold text-neon-blue drop-shadow-[0_0_5px_rgba(0,223,255,0.8)]">
+                <i class="fas fa-layer-group mr-2"></i>ANI_TIER_SYS
+            </h1>
+            <div class="flex gap-4 flex-wrap justify-center">
+                <button id="settings-btn"
+                    class="border border-neon-pink text-neon-pink px-4 py-2 hover:bg-neon-pink hover:text-black transition-all duration-300 font-bold uppercase tracking-wider text-sm shadow-[0_0_5px_#FF00FF]">
+                    <i class="fas fa-cog mr-2"></i>TIER_SETTINGS
+                </button>
+                <button id="save-btn"
+                    class="border border-neon-blue text-neon-blue px-4 py-2 hover:bg-neon-blue hover:text-black transition-all duration-300 font-bold uppercase tracking-wider text-sm shadow-[0_0_5px_#00dfff]">
+                    <i class="fas fa-save mr-2"></i>SAVE
+                </button>
+                <button id="export-btn"
+                    class="border border-neon-green text-neon-green px-4 py-2 hover:bg-neon-green hover:text-black transition-all duration-300 font-bold uppercase tracking-wider text-sm shadow-[0_0_5px_#00FF00]">
+                    <i class="fas fa-file-export mr-2"></i>EXPORT_IMAGE
+                </button>
+            </div>
+        </header>
+
+        <!-- Top Control Panel -->
+        <div id="top-control-panel" class="flex flex-col gap-6 w-full">
+            <!-- Search/Sync/Seasons Panel -->
+            <div id="search-sync-area" class="border border-neon-blue bg-base-bg/90 p-4 shadow-neon relative w-full">
+                <div class="flex border-b border-neon-blue/30 mb-4">
+                    <button id="tab-search"
+                        class="flex-1 py-2 text-neon-blue font-bold border-b-2 border-neon-blue bg-neon-blue/10 text-sm">
+                        <i class="fas fa-search mr-1"></i>SEARCH
+                    </button>
+                    <button id="tab-sync"
+                        class="flex-1 py-2 text-gray-400 font-bold hover:text-neon-blue transition-colors text-sm">
+                        <i class="fas fa-sync mr-1"></i>SYNC
+                    </button>
+                    <button id="tab-seasons"
+                        class="flex-1 py-2 text-gray-400 font-bold hover:text-neon-blue transition-colors text-sm">
+                        <i class="fas fa-calendar-alt mr-1"></i>SEASONS
+                    </button>
+                </div>
+
+                <div id="panel-search" class="block">
+                    <div class="flex gap-2 mb-4">
+                        <input id="search-input" type="text" placeholder="Search..."
+                            class="flex-1 bg-black/50 border border-neon-blue/50 text-white p-2 focus:outline-none focus:border-neon-blue font-mono text-sm">
+                        <button id="search-btn"
+                            class="bg-neon-blue text-black px-4 font-bold hover:bg-white transition-colors">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <p id="search-instructions-note" class="search-note">
+                        Refresh the search when you switch between anime, manga, or characters.
+                    </p>
+                    <div class="flex gap-2 mb-4">
+                        <button id="type-anime"
+                            class="flex-1 text-xs border border-neon-blue bg-neon-blue text-black font-bold py-1">ANIME</button>
+                        <button id="type-manga"
+                            class="flex-1 text-xs border border-neon-blue text-neon-blue font-bold py-1 hover:bg-neon-blue/20">MANGA</button>
+                        <button id="type-character"
+                            class="flex-1 text-xs border border-neon-pink text-neon-pink font-bold py-1 hover:bg-neon-pink/20">CHARACTERS</button>
+                    </div>
+
+                    <div id="character-search-mode-toggle" class="flex gap-2 mb-4 hidden">
+                        <button id="mode-character-name"
+                            class="flex-1 text-xs border border-neon-pink bg-neon-pink text-black font-bold py-1">Character
+                            Name</button>
+                        <button id="mode-series-title"
+                            class="flex-1 text-xs border border-neon-pink text-neon-pink font-bold py-1 hover:bg-neon-pink/20">Series
+                            Title</button>
+                    </div>
+
+                    <div id="global-filter-controls" style="display: none;">
+                        <input type="text" id="filter-title-input" class="filter-title-input"
+                            placeholder="Filter by title...">
+                        <div class="sort-controls-group">
+                            <select id="filter-sort-by">
+                                <option value="title">Title</option>
+                                <option value="popularity">Popularity</option>
+                                <option value="averageScore">Score</option>
+                                <option value="trending">Trending</option>
+                                <option value="id">Date Added</option>
+                                <option value="startDate">Release Date</option>
+                            </select>
+                            <select id="filter-sort-direction">
+                                <option value="DESC">DESC</option>
+                                <option value="ASC">ASC</option>
+                            </select>
+                        </div>
+                        <select id="filter-format"></select>
+                        <select id="filter-status" style="display: none;">
+                            <option value="all">All Status</option>
+                            <option value="CURRENT">Watching</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="PAUSED">Paused</option>
+                            <option value="DROPPED">Dropped</option>
+                            <option value="PLANNING">Planning</option>
+                        </select>
+                        <button id="layout-toggle-btn" class="layout-toggle-btn" title="Toggle Layout">
+                            <i class="fas fa-th"></i>
+                        </button>
+                    </div>
+
+                    <div id="search-results"
+                        class="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+                        <div class="col-span-full text-center text-gray-500 py-4">Ready to search...</div>
+                    </div>
+                </div>
+
+                <div id="panel-sync" class="hidden">
+                    <div class="flex gap-2 mb-4">
+                        <input id="username-input" type="text" placeholder="AniList Username"
+                            class="flex-1 bg-black/50 border border-neon-blue/50 text-white p-2 focus:outline-none focus:border-neon-blue font-mono text-sm">
+                        <button id="sync-btn"
+                            class="bg-neon-blue text-black px-4 font-bold hover:bg-white transition-colors">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <p class="search-note">
+                        Refresh the search when you switch between anime, manga, or characters.
+                    </p>
+                    <div class="flex gap-2 mb-4">
+                        <button id="type-anime-sync"
+                            class="flex-1 text-xs border border-neon-blue bg-neon-blue text-black font-bold py-1">ANIME</button>
+                        <button id="type-manga-sync"
+                            class="flex-1 text-xs border border-neon-blue text-neon-blue font-bold py-1 hover:bg-neon-blue/20">MANGA</button>
+                    </div>
+                    <div id="sync-status" class="text-xs text-center text-gray-400 font-mono mb-4">Waiting for input...
+                    </div>
+
+                    <div id="global-filter-controls-sync" style="display: none;">
+                        <input type="text" id="filter-title-input-sync" class="filter-title-input"
+                            placeholder="Filter by title...">
+                        <div class="sort-controls-group">
+                            <select id="filter-sort-by-sync">
+                                <option value="title">Title</option>
+                                <option value="popularity">Popularity</option>
+                                <option value="averageScore">Score</option>
+                                <option value="trending">Trending</option>
+                                <option value="id">Date Added</option>
+                                <option value="startDate">Release Date</option>
+                            </select>
+                            <select id="filter-sort-direction-sync">
+                                <option value="DESC">DESC</option>
+                                <option value="ASC">ASC</option>
+                            </select>
+                        </div>
+                        <select id="filter-format-sync"></select>
+                        <select id="filter-status-sync">
+                            <option value="all">All Status</option>
+                            <option value="CURRENT">Watching</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="PAUSED">Paused</option>
+                            <option value="DROPPED">Dropped</option>
+                            <option value="PLANNING">Planning</option>
+                        </select>
+                        <button id="layout-toggle-btn-sync" class="layout-toggle-btn" title="Toggle Layout">
+                            <i class="fas fa-th"></i>
+                        </button>
+                    </div>
+
+                    <div id="sync-results"
+                        class="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar"></div>
+                </div>
+
+                <div id="panel-seasons" class="hidden">
+                    <div class="seasons-instructions">
+                        <ul>
+                            <li>Choose the season, then enter the year to begin.</li>
+                            <li>If you have an account, you can type it to use your library.</li>
+                        </ul>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 mb-2">
+                        <select id="season-select"
+                            class="bg-black/50 border border-neon-blue/50 text-white p-2 focus:outline-none focus:border-neon-blue font-mono text-sm">
+                            <option value="WINTER">Winter</option>
+                            <option value="SPRING">Spring</option>
+                            <option value="SUMMER">Summer</option>
+                            <option value="FALL">Fall</option>
+                        </select>
+                        <input id="year-input" type="number" placeholder="Year"
+                            class="bg-black/50 border border-neon-blue/50 text-white p-2 focus:outline-none focus:border-neon-blue font-mono text-sm">
+                        <input id="season-username-input" type="text" placeholder="Username (optional)"
+                            class="bg-black/50 border border-neon-blue/50 text-white p-2 focus:outline-none focus:border-neon-blue font-mono text-sm">
+                        <button id="season-search-btn"
+                            class="bg-neon-blue text-black px-4 font-bold hover:bg-white transition-colors text-sm">
+                            <i class="fas fa-search mr-1"></i>Search
+                        </button>
+                    </div>
+                    <div id="season-status" class="text-xs text-center text-gray-400 font-mono mb-4">Select season and
+                        year...</div>
+
+                    <div id="global-filter-controls-seasons" style="display: none;">
+                        <input type="text" id="filter-title-input-seasons" class="filter-title-input"
+                            placeholder="Filter by title...">
+                        <div class="sort-controls-group">
+                            <select id="filter-sort-by-seasons">
+                                <option value="title">Title</option>
+                                <option value="popularity">Popularity</option>
+                                <option value="averageScore">Score</option>
+                                <option value="trending">Trending</option>
+                                <option value="id">Date Added</option>
+                                <option value="startDate">Release Date</option>
+                            </select>
+                            <select id="filter-sort-direction-seasons">
+                                <option value="DESC">DESC</option>
+                                <option value="ASC">ASC</option>
+                            </select>
+                        </div>
+                        <select id="filter-format-seasons"></select>
+                        <button id="layout-toggle-btn-seasons" class="layout-toggle-btn" title="Toggle Layout">
+                            <i class="fas fa-th"></i>
+                        </button>
+                    </div>
+
+                    <div id="season-results"
+                        class="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar"></div>
+                </div>
+            </div>
+
+            <!-- Unranked Pool Panel -->
+            <div id="unranked-pool-panel" class="border border-neon-blue bg-base-bg/90 p-4 shadow-neon relative w-full">
+                <div class="flex justify-between items-center mb-4 border-b border-neon-blue/30 pb-2">
+                    <h2 class="text-xl font-orbitron text-neon-blue">
+                        <i class="fas fa-box-open mr-2"></i>UNRANKED_POOL
+                    </h2>
+                    <button id="clear-unranked-pool-btn"
+                        class="text-xs border border-red-500 text-red-400 px-2 py-1 hover:bg-red-500 hover:text-white transition-all font-bold uppercase rounded">
+                        <i class="fas fa-trash-alt mr-1"></i>Clear Unranked Pool
+                    </button>
+                </div>
+                <div id="pool-items"
+                    class="min-h-[150px] max-h-[300px] overflow-y-auto custom-scrollbar flex flex-wrap gap-2 p-2 bg-black/20 border border-dashed border-gray-700">
+                    <div class="w-full text-center text-gray-500 py-8">Pool Empty</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier List Area -->
+        <div id="tier-list-container-wrapper" class="flex-grow flex flex-col gap-4">
+            <div id="tier-container" class="flex flex-col gap-4"></div>
+            <div class="flex justify-center gap-4 mt-4 flex-wrap">
+                <button id="add-tier-btn"
+                    class="bg-blue-600/30 border border-blue-500 text-blue-300 px-6 py-2 hover:bg-blue-500 hover:text-white transition-all font-bold uppercase rounded-full">
+                    <i class="fas fa-plus mr-2"></i>Add Tier
+                </button>
+                <button id="rem-tier-btn"
+                    class="bg-red-600/30 border border-red-500 text-red-300 px-6 py-2 hover:bg-red-500 hover:text-white transition-all font-bold uppercase rounded-full">
+                    <i class="fas fa-minus mr-2"></i>Rem Tier
+                </button>
+                <button id="clear-ranked-tiers-btn"
+                    class="bg-red-900/30 border border-red-500 text-red-400 px-6 py-2 hover:bg-red-500 hover:text-white transition-all font-bold uppercase rounded-full">
+                    <i class="fas fa-trash mr-2"></i>Clear Ranked Tiers
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
