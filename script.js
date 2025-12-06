@@ -118,6 +118,11 @@ let currentResults = [];
 let activeTab = 'search';
 let lastSeriesSearchResults = [];
 
+// Touch Drag State
+let currentTouchedItem = null;
+let initialX = 0;
+let initialY = 0;
+
 // DOM Elements
 const tierContainer = document.getElementById('tier-container');
 const addTierBtn = document.getElementById('add-tier-btn');
@@ -199,14 +204,7 @@ const tierSettingsContainer = document.getElementById('tier-settings-container')
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
-    // Touch Handling Variables (moved to top to avoid ReferenceError)
-    let touchDragItem = null;
-    let touchDragOffsetX = 0;
-    let touchDragOffsetY = 0;
-
     loadState();
-
-
     renderTiers();
     renderPool();
     setupEventListeners();
@@ -234,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             box.appendChild(itemsDiv);
             tierContainer.appendChild(box);
         });
-        addTierBtn.style.display = 'block';
+        addTierBtn.style.display = tiers.length >= 7 ? 'none' : 'block';
         remTierBtn.style.display = tiers.length <= 0 ? 'none' : 'block';
     }
 
@@ -250,197 +248,25 @@ document.addEventListener('DOMContentLoaded', () => {
     function createDraggableImage(item, source) {
         const wrapper = document.createElement('div');
         wrapper.className = 'album group';
-        // HARDENED TOUCH SETTINGS:
-        wrapper.style.touchAction = 'none';
-        wrapper.style.userSelect = 'none';
-        wrapper.style.webkitUserSelect = 'none';
-
         const img = document.createElement('img');
         img.src = item.img;
-        img.draggable = true; // Keep true for Mouse Drag
-        // Prevent native touch actions on image too
-        img.style.touchAction = 'none';
-        img.style.userSelect = 'none';
+        img.draggable = true;
+        img.classList.add('draggable');
 
+        // Touch Start Listener
+        img.addEventListener('touchstart', (e) => handleTouchStart(e, item, source), { passive: false });
         const tooltip = document.createElement('div');
         tooltip.className = 'absolute bottom-0 left-0 right-0 bg-black/80 text-white text-[10px] p-1 opacity-0 group-hover:opacity-100 transition-opacity truncate text-center pointer-events-none';
         tooltip.textContent = item.title;
         wrapper.appendChild(img);
         wrapper.appendChild(tooltip);
-        img.addEventListener('dragstart', (e) => {
+        img.addEventListener('dragstart', () => {
             draggedItem = item;
             draggedFrom = source;
             img.classList.add('dragging');
-
-            // Standardize drag data for robustness
-            if (e.dataTransfer) {
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', JSON.stringify(item));
-            }
         });
         img.addEventListener('dragend', () => img.classList.remove('dragging'));
-
-        // Touch Events explicitly on wrapper for better capture
-        wrapper.addEventListener('touchstart', (e) => handleTouchStart(e, item, source), { passive: false });
-        wrapper.addEventListener('touchmove', handleTouchMove, { passive: false });
-        wrapper.addEventListener('touchend', handleTouchEnd);
-
         return wrapper;
-    }
-
-
-
-    function handleTouchStart(e, item, source) {
-        if (e.touches.length > 1) return;
-        e.preventDefault();
-
-        const target = e.target;
-        const wrapper = target.closest('.album');
-        if (!wrapper) return;
-
-        // Disable native drag on the image to prevent conflict
-        const imgEl = wrapper.querySelector('img');
-        if (imgEl) imgEl.draggable = false;
-
-        draggedItem = item;
-        draggedFrom = source;
-
-        const touch = e.touches[0];
-        const rect = wrapper.getBoundingClientRect();
-
-        touchDragOffsetX = touch.clientX - rect.left;
-        touchDragOffsetY = touch.clientY - rect.top;
-
-        // GHOST STRATEGY: Create a fresh visual ghost instead of deep cloning
-        // This avoids inheriting context-specific styles (like opacity transitions) that might hide the element
-        const ghost = document.createElement('div');
-        ghost.style.position = 'fixed';
-        ghost.style.left = rect.left + 'px';
-        ghost.style.top = rect.top + 'px';
-        ghost.style.width = rect.width + 'px';
-        ghost.style.height = rect.height + 'px';
-        ghost.style.zIndex = '2147483647'; // Max Z-Index
-        ghost.style.pointerEvents = 'none';
-        ghost.style.transform = 'scale(1.1)';
-        ghost.style.borderRadius = '4px';
-        ghost.style.boxShadow = '0 0 15px #00dfff'; // Strong glow
-        ghost.style.border = '2px solid #00dfff';
-        ghost.style.overflow = 'hidden';
-        ghost.style.backgroundColor = '#17212b'; // Background in case image transparent
-
-        const ghostImg = document.createElement('img');
-        ghostImg.src = item.img;
-        ghostImg.style.width = '100%';
-        ghostImg.style.height = '100%';
-        ghostImg.style.objectFit = 'cover';
-        ghostImg.style.display = 'block';
-
-        ghost.appendChild(ghostImg);
-        document.body.appendChild(ghost);
-        touchDragItem = ghost;
-
-        // Visual feedback on the source element
-        wrapper.classList.add('opacity-20');
-    }
-
-    function handleTouchMove(e) {
-        if (!touchDragItem) return;
-        e.preventDefault();
-
-        const touch = e.touches[0];
-        const newX = touch.clientX - touchDragOffsetX;
-        const newY = touch.clientY - touchDragOffsetY;
-
-        touchDragItem.style.left = newX + 'px';
-        touchDragItem.style.top = newY + 'px';
-    }
-
-    function handleTouchEnd(e) {
-        if (!touchDragItem) return;
-        e.preventDefault();
-
-        // 1. Identify drop target through the clone/pointer
-        const touch = e.changedTouches[0];
-        const target = document.elementFromPoint(touch.clientX, touch.clientY);
-
-        // Remove the clone
-        if (touchDragItem && touchDragItem.parentNode === document.body) {
-            document.body.removeChild(touchDragItem);
-        }
-        touchDragItem = null;
-
-        // 2. Determine Destination
-        let destination = null;
-
-        if (target) {
-            const poolContainer = target.closest('#pool-items');
-            const itemsContainer = target.closest('.items');
-
-            if (poolContainer) {
-                destination = 'pool';
-            } else if (itemsContainer && itemsContainer.dataset.tierIndex !== undefined) {
-                destination = { tierIndex: parseInt(itemsContainer.dataset.tierIndex) };
-            }
-        }
-
-        // 3. Execute Drop
-        if (destination) {
-            // Remove from source
-            if (draggedFrom === 'pool') {
-                pool = pool.filter(i => i.id !== draggedItem.id);
-            } else if (typeof draggedFrom === 'object') {
-                const sourceTier = tiers[draggedFrom.tierIndex];
-                if (sourceTier) {
-                    sourceTier.items = sourceTier.items.filter(i => i.id !== draggedItem.id);
-                }
-            }
-
-            // Add to destination
-            if (destination === 'pool') {
-                pool.push(draggedItem);
-            } else if (typeof destination === 'object') {
-                const destTier = tiers[destination.tierIndex];
-
-                let insertIndex = destTier.items.length;
-                const itemsContainer = tierContainer.children[destination.tierIndex].querySelector('.items');
-
-                // For logic, we need to compare against static items.
-                // Since we used a CLONE, the original item is still in the DOM (just transparent).
-                // We should EXCLUDE it from calculation to avoid self-reference madness.
-                const itemElements = Array.from(itemsContainer.children).filter(el => {
-                    return !el.classList.contains('opacity-20');
-                });
-
-                for (let i = 0; i < itemElements.length; i++) {
-                    const rect = itemElements[i].getBoundingClientRect();
-                    const centerX = rect.left + rect.width / 2;
-                    if (touch.clientX < centerX) {
-                        insertIndex = i;
-                        break;
-                    }
-                }
-
-                destTier.items.splice(insertIndex, 0, draggedItem);
-            }
-            // Manual save matching existing logic
-            // (Note: user removed saveState call in previous turn, but we must ensure state persists differently? 
-            // The original handleDrop had saveState() commented out in my earlier view? No, it called `saveState()`.
-            // Wait, I removed `saveState()` in step 29 explicitly.
-            // I should respect that or re-add it if needed.
-            // Actually, handleDrop calls saveState?
-            // Let's check view_file from step 8 lines 681.
-            // "renderTiers(); renderPool();"
-            // It does NOT call saveState at end of handleDrop inside the snippet I saw?
-            // Wait, I saw "saveState(); // Ensure state is saved after move" in step 25.
-            // Then I removed it in step 29.
-            // So I will NOT add it here.)
-        }
-
-        // 4. Reset & Render
-        draggedItem = null;
-        draggedFrom = null;
-        renderTiers();
-        renderPool();
     }
 
     // Search
@@ -793,6 +619,104 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Touch Handling Functions
+    function handleTouchStart(e, item, source) {
+        if (e.touches.length > 1) return; // Ignore multi-touch
+        // We do NOT call preventDefault here immediately if we want to allow scrolling when NOT dragging.
+        // But prompt says: "Call e.preventDefault() to prevent scrolling and allow dragging"
+        e.preventDefault();
+
+        currentTouchedItem = e.currentTarget;
+        draggedItem = item;
+        draggedFrom = source;
+
+        const touch = e.touches[0];
+        initialX = touch.clientX;
+        initialY = touch.clientY;
+
+        // Apply temporary styling
+        const rect = currentTouchedItem.getBoundingClientRect();
+
+        currentTouchedItem.style.width = rect.width + 'px';
+        currentTouchedItem.style.height = rect.height + 'px';
+        currentTouchedItem.style.position = 'fixed';
+        currentTouchedItem.style.zIndex = '1000';
+        currentTouchedItem.style.left = rect.left + 'px';
+        currentTouchedItem.style.top = rect.top + 'px';
+        currentTouchedItem.style.margin = '0';
+        currentTouchedItem.classList.add('dragging');
+    }
+
+    function handleTouchMove(e) {
+        if (!currentTouchedItem) return;
+        e.preventDefault(); // Stop scrolling while dragging
+        const touch = e.touches[0];
+        const dx = touch.clientX - initialX;
+        const dy = touch.clientY - initialY;
+
+        currentTouchedItem.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+    }
+
+    function handleTouchEnd(e) {
+        if (!currentTouchedItem) return;
+
+        const touch = e.changedTouches[0];
+        const x = touch.clientX;
+        const y = touch.clientY;
+
+        // Temporarily hide to find element underneath
+        const prevDisplay = currentTouchedItem.style.display;
+        currentTouchedItem.style.display = 'none';
+        const targetElement = document.elementFromPoint(x, y);
+        currentTouchedItem.style.display = prevDisplay;
+
+        let destination = null;
+
+        if (targetElement) {
+            const tierRow = targetElement.closest('.items');
+            const poolRow = targetElement.closest('#pool-items');
+
+            if (poolRow) {
+                destination = 'pool';
+            } else if (tierRow && tierRow.dataset.tierIndex !== undefined) {
+                destination = { tierIndex: parseInt(tierRow.dataset.tierIndex) };
+            }
+        }
+
+        if (destination) {
+            // Mock event for handleDrop
+            const mockEvent = {
+                preventDefault: () => { },
+                clientX: x,
+                clientY: y
+            };
+            handleDrop(mockEvent, destination);
+        } else {
+            // Invalid drop: Snap back
+            currentTouchedItem.style.position = '';
+            currentTouchedItem.style.zIndex = '';
+            currentTouchedItem.style.transform = '';
+            currentTouchedItem.style.left = '';
+            currentTouchedItem.style.top = '';
+            currentTouchedItem.style.width = '';
+            currentTouchedItem.style.height = '';
+            currentTouchedItem.style.margin = '';
+            currentTouchedItem.classList.remove('dragging');
+        }
+
+        currentTouchedItem = null;
+        initialX = 0;
+        initialY = 0;
+
+        // Note: dragend logic for mouse sets draggedItem = null, but here we do it explicitly if needed.
+        // handleDrop sets draggedItem = null.
+        // If we didn't drop, we should probably reset draggedItem too?
+        if (!destination) {
+            draggedItem = null;
+            draggedFrom = null;
+        }
+    }
+
     // Drag & Drop
     function handleDragOver(e) { e.preventDefault(); }
 
@@ -1001,10 +925,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     function setupEventListeners() {
         addTierBtn.addEventListener('click', () => {
-            const defaultCfg = DEFAULT_TIER_CONFIG[tiers.length % DEFAULT_TIER_CONFIG.length] || DEFAULT_TIER_CONFIG[0];
-            tiers.push({ name: defaultCfg.name, color: defaultCfg.color, items: [] });
-            renderTiers();
-            saveState();
+            if (tiers.length < 7) {
+                const nextConfig = tierConfig[tiers.length];
+                tiers.push({ name: nextConfig.name, color: nextConfig.color, items: [] });
+                renderTiers();
+            }
         });
         remTierBtn.addEventListener('click', () => {
             if (tiers.length > 0) {
@@ -1012,11 +937,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 pool.push(...removed.items);
                 renderTiers();
                 renderPool();
-                saveState();
             }
         });
         poolItems.addEventListener('dragover', handleDragOver);
         poolItems.addEventListener('drop', (e) => handleDrop(e, 'pool'));
+
+        // global touch listeners
+        document.body.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.body.addEventListener('touchend', handleTouchEnd);
 
         // Tab switching
         tabSearch.addEventListener('click', () => {
@@ -1115,21 +1043,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Settings modal
         settingsBtn.addEventListener('click', openSettingsModal);
-
-        const addTierSettingsBtn = document.getElementById('add-tier-settings-btn');
-        if (addTierSettingsBtn) {
-            addTierSettingsBtn.addEventListener('click', () => {
-                const defaultCfg = DEFAULT_TIER_CONFIG[tiers.length % DEFAULT_TIER_CONFIG.length] || DEFAULT_TIER_CONFIG[0];
-                tiers.push({ name: 'New', color: defaultCfg.color, items: [] });
-                renderTiers();
-                saveState();
-                populateSettingsModal();
-                setTimeout(() => {
-                    tierSettingsContainer.scrollTop = tierSettingsContainer.scrollHeight;
-                }, 50);
-            });
-        }
-
         closeSettingsBtn.addEventListener('click', closeSettingsModal);
         saveSettingsBtn.addEventListener('click', saveSettings);
         resetSettingsBtn.addEventListener('click', resetSettings);
@@ -1214,8 +1127,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 option.textContent = opt.text;
                 select.appendChild(option);
             });
-            // Fix: Explicitly set value to ensure it's not empty or undefined
-            select.value = 'all';
         });
     }
 
@@ -1251,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        if (formatValue && formatValue !== 'all') results = results.filter(item => item.format === formatValue);
+        if (formatValue !== 'all') results = results.filter(item => item.format === formatValue);
         if (activeTab === 'sync' && statusValue !== 'all') results = results.filter(item => item.userStatus === statusValue);
 
         results.sort((a, b) => {
@@ -1291,102 +1202,84 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsModal.classList.add('hidden');
     }
 
-    // Populate Settings Modal with new design
+    // Populate the settings modal with current tier configuration
     function populateSettingsModal() {
         tierSettingsContainer.innerHTML = '';
 
-        tiers.forEach((tier, index) => {
+        tierConfig.forEach((tier, index) => {
             const row = document.createElement('div');
             row.className = 'tier-setting-row';
-
-            // ID column removed as requested
-
             row.innerHTML = `
-            <div class="tier-color-box" style="background-color: ${tier.color}"></div>
-            <input type="text" class="tier-name-input-modern" value="${tier.name}">
-            <button class="color-picker-btn">
-                <i class="fas fa-palette text-neon-pink"></i>
-                <input type="color" class="color-picker-input-hidden" value="${tier.color}">
-            </button>
-            <div class="w-[30px] flex justify-center">
-                ${tiers.length > 1 ? '<i class="fas fa-trash delete-tier-btn" title="Delete Tier"></i>' : ''}
-            </div>
+            <div class="tier-color-preview" style="background-color: ${tier.color}"></div>
+            <input type="text" class="tier-name-input" data-tier-id="${tier.id}" value="${tier.name}" maxlength="3">
+            <input type="color" class="tier-color-input" data-tier-id="${tier.id}" value="${tier.color}">
         `;
 
-            // Listeners
-            const nameInput = row.querySelector('.tier-name-input-modern');
-            const colorInput = row.querySelector('.color-picker-input-hidden');
-            const colorBox = row.querySelector('.tier-color-box');
-            const deleteBtn = row.querySelector('.delete-tier-btn');
-
-            // Name Change
-            nameInput.addEventListener('input', debounce((e) => {
-                tier.name = e.target.value;
-                renderTiers();
-                saveState();
-            }, 300));
-
-            // Color Change
+            // Update color preview when color changes
+            const colorInput = row.querySelector('.tier-color-input');
+            const colorPreview = row.querySelector('.tier-color-preview');
             colorInput.addEventListener('input', (e) => {
-                tier.color = e.target.value;
-                colorBox.style.backgroundColor = tier.color;
-                renderTiers();
-                saveState();
+                colorPreview.style.backgroundColor = e.target.value;
             });
-
-            // Delete Tier
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', () => {
-                    if (confirm('Delete this tier? Items will be moved to pool.')) {
-                        pool.push(...tier.items);
-                        tiers.splice(index, 1);
-                        renderTiers();
-                        renderPool();
-                        saveState();
-                        populateSettingsModal();
-                    }
-                });
-            }
 
             tierSettingsContainer.appendChild(row);
         });
     }
 
+    // Save settings from modal to tierConfig and localStorage
     function saveSettings() {
-        // Auto-save is implemented directly in listeners
+        const nameInputs = tierSettingsContainer.querySelectorAll('.tier-name-input');
+        const colorInputs = tierSettingsContainer.querySelectorAll('.tier-color-input');
+
+        nameInputs.forEach((input, index) => {
+            tierConfig[index].name = input.value || tierConfig[index].name;
+        });
+
+        colorInputs.forEach((input, index) => {
+            tierConfig[index].color = input.value;
+        });
+
+        // Persist to localStorage
+        localStorage.setItem('aniTierList_tierConfig', JSON.stringify(tierConfig));
+
+        // Update existing tiers with new names and colors (preserve items)
+        tiers.forEach((tier, index) => {
+            if (tierConfig[index]) {
+                tier.name = tierConfig[index].name;
+                tier.color = tierConfig[index].color;
+            }
+        });
+
+        // Re-render the tier list
+        renderTiers();
+
+        // Close modal
+        closeSettingsModal();
+
+        // Visual feedback
+        saveSettingsBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Saved!';
+        setTimeout(() => {
+            saveSettingsBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Settings';
+        }, 1000);
     }
 
     // Reset tierConfig to defaults
     function resetSettings() {
-        if (!confirm('Reset all tier labels and colors to defaults? Items will be moved to pool.')) return;
+        if (!confirm('Reset all tier labels and colors to defaults?')) return;
 
-        // 1. Reset Data
-        const defaults = JSON.parse(JSON.stringify(DEFAULT_TIER_CONFIG));
-        const allItems = tiers.flatMap(t => t.items);
+        tierConfig = JSON.parse(JSON.stringify(DEFAULT_TIER_CONFIG));
+        localStorage.setItem('aniTierList_tierConfig', JSON.stringify(tierConfig));
 
-        // Re-construct tiers
-        tiers = defaults.map(d => ({
-            name: d.name,
-            color: d.color,
-            items: []
-        }));
+        // Update existing tiers
+        tiers.forEach((tier, index) => {
+            if (tierConfig[index]) {
+                tier.name = tierConfig[index].name;
+                tier.color = tierConfig[index].color;
+            }
+        });
 
-        // Move items to pool
-        pool.push(...allItems);
-        pool = [...new Map(pool.map(item => [item.id, item])).values()];
-
-        // 2. Clear Persistence to force fresh state
-        localStorage.removeItem('aniTierList_tiers');
-        localStorage.removeItem('aniTierList_pool');
-
-        // 3. Render and Save
         renderTiers();
-        renderPool();
-        saveState();
         populateSettingsModal();
-
-        // 4. Feedback
-        // alert('Settings have been reset to default.');
     }
 
     // Character Search - Full API Implementation

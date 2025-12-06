@@ -89,8 +89,6 @@ body {
     width: 80px;
     height: 110px;
     cursor: grab;
-    touch-action: none;
-    /* Prevent scroll on mobile */
     transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
     border-radius: 4px;
@@ -147,16 +145,15 @@ body {
     max-height: 400px;
 }
 
-#search-results>div,
-#sync-results>div,
-#season-results>div {
+#search-results > div,
+#sync-results > div,
+#season-results > div {
     width: 100%;
     box-sizing: border-box;
     height: auto;
 }
 
 @media (max-width: 1200px) {
-
     #search-results,
     #sync-results,
     #season-results {
@@ -165,7 +162,6 @@ body {
 }
 
 @media (max-width: 900px) {
-
     #search-results,
     #sync-results,
     #season-results {
@@ -174,7 +170,6 @@ body {
 }
 
 @media (max-width: 600px) {
-
     #search-results,
     #sync-results,
     #season-results {
@@ -261,211 +256,66 @@ body {
     width: 100%;
 }
 
-#top-control-panel>div {
+#top-control-panel > div {
     min-width: 0;
 }
 
-/* Settings Modal - Redesign */
-#settings-modal .bg-base-bg {
-    background-color: #17212b;
-    border: 2px solid #FF00FF;
-    border-radius: 12px;
-    box-shadow: 0 0 30px rgba(255, 0, 255, 0.2);
-}
-
-.tier-settings-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 20px;
-}
-
-.tier-settings-title {
-    font-family: 'Inter', sans-serif;
-    /* Fallback to sans-serif if Inter not loaded */
-    font-size: 1.5rem;
-    color: #dedede;
-    text-align: center;
-    flex: 1;
-}
-
-.close-btn-styled {
-    background: transparent;
-    border: 1px solid #FF00FF;
-    color: #FF00FF;
-    padding: 6px 16px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-transform: uppercase;
-    font-family: 'JetBrains Mono', monospace;
-}
-
-.close-btn-styled:hover {
-    background: rgba(255, 0, 255, 0.1);
-    box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
-}
-
-.tier-list-header-row {
-    color: #888;
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    padding-left: 10px;
-}
-
-/* Tier Row Styling - Matches Image */
+/* Settings Modal - Tier Row Styling */
 .tier-setting-row {
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 12px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 0, 255, 0.2);
+    border-radius: 6px;
 }
 
-.tier-label-display {
-    width: 30px;
-    text-align: center;
-    font-size: 1.2rem;
-    color: #ccc;
-    font-family: sans-serif;
+.tier-setting-row:hover {
+    border-color: rgba(255, 0, 255, 0.5);
 }
 
-.tier-color-box {
-    width: 32px;
-    height: 32px;
-    border-radius: 2px;
+.tier-color-preview {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
     flex-shrink: 0;
 }
 
-.tier-name-input-modern {
+.tier-name-input {
     flex: 1;
-    background: transparent;
-    border: 1px solid #FF00FF;
-    border-radius: 6px;
-    color: #eee;
-    padding: 10px 15px;
-    font-size: 1rem;
-    font-family: sans-serif;
-    outline: none;
-    transition: all 0.2s;
-}
-
-.tier-name-input-modern:focus {
-    box-shadow: 0 0 10px rgba(255, 0, 255, 0.2);
-    background: rgba(255, 0, 255, 0.05);
-}
-
-.color-picker-btn {
-    font-size: 1.5rem;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 5px;
-    transition: transform 0.2s;
-    position: relative;
-    overflow: hidden;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.color-picker-btn i {
-    z-index: 10;
-    pointer-events: none;
-}
-
-.color-picker-input-hidden {
-    position: absolute;
-    opacity: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-}
-
-.color-picker-btn:hover {
-    transform: scale(1.1);
-}
-
-.delete-tier-btn {
-    color: #ef4444;
-    cursor: pointer;
-    padding: 5px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 0, 255, 0.3);
+    color: white;
+    padding: 8px 12px;
+    font-family: 'Jua', sans-serif;
     font-size: 1.2rem;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-}
-
-.delete-tier-btn:hover {
-    opacity: 1;
-}
-
-.settings-footer-note {
     text-align: center;
-    color: #aaa;
-    font-style: italic;
-    font-size: 0.9rem;
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
 }
 
-.add-tier-row-btn {
-    width: 100%;
-    padding: 10px;
-    margin-top: 15px;
-    border: 1px dashed #444;
-    background: rgba(255, 255, 255, 0.02);
-    color: #888;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-#settings-modal .custom-scrollbar::-webkit-scrollbar-track {
-    border-color: rgba(255, 0, 255, 0.2);
-}
-
-#settings-modal .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #FF00FF 0%, #cc00cc 100%);
-}
-
-#settings-modal .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #ff66ff 0%, #FF00FF 100%);
-}
-
-.add-tier-row-btn:hover {
-    background: rgba(255, 0, 255, 0.05);
-    color: #FF00FF;
+.tier-name-input:focus {
+    outline: none;
     border-color: #FF00FF;
 }
 
-/* Mobile Optimizations */
-@media (max-width: 600px) {
-    .tier-setting-row {
-        gap: 10px;
-    }
+.tier-color-input {
+    width: 50px;
+    height: 40px;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    border-radius: 4px;
+}
 
-    .tier-label-display {
-        width: 20px;
-        font-size: 1rem;
-    }
+.tier-color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
 
-    .tier-name-input-modern {
-        padding: 8px 10px;
-        font-size: 0.9rem;
-    }
-
-    .tier-color-box {
-        width: 24px;
-        height: 24px;
-    }
+.tier-color-input::-webkit-color-swatch {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
 }
 
 /* Layout Toggle Button */
@@ -515,18 +365,16 @@ body {
 }
 
 @media (max-width: 600px) {
-
     #search-results.list-view,
     #sync-results.list-view,
     #season-results.list-view {
         grid-template-columns: 1fr !important;
     }
 }
-
 /* List view - image container fixed width */
-#search-results.list-view .search-result-card>div:first-child,
-#sync-results.list-view .search-result-card>div:first-child,
-#season-results.list-view .search-result-card>div:first-child {
+#search-results.list-view .search-result-card > div:first-child,
+#sync-results.list-view .search-result-card > div:first-child,
+#season-results.list-view .search-result-card > div:first-child {
     width: 60px !important;
     min-width: 60px !important;
     flex-shrink: 0;
@@ -574,7 +422,13 @@ body {
 .select-series-btn {
     box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
 }
-
 .select-series-btn:hover {
     box-shadow: 0 0 15px rgba(147, 51, 234, 0.8);
 }
+
+/* Prevents the browser from treating a long press as text selection or a context menu */
+.draggable {
+    touch-action: none;
+    user-select: none;
+}
+
