@@ -199,7 +199,14 @@ const tierSettingsContainer = document.getElementById('tier-settings-container')
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
+    // Touch Handling Variables (moved to top to avoid ReferenceError)
+    let touchDragItem = null;
+    let touchDragOffsetX = 0;
+    let touchDragOffsetY = 0;
+
     loadState();
+
+
     renderTiers();
     renderPool();
     setupEventListeners();
@@ -227,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
             box.appendChild(itemsDiv);
             tierContainer.appendChild(box);
         });
-        addTierBtn.style.display = tiers.length >= 7 ? 'none' : 'block';
+        addTierBtn.style.display = 'block';
         remTierBtn.style.display = tiers.length <= 0 ? 'none' : 'block';
     }
 
@@ -253,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
         img.draggable = true; // Keep true for Mouse Drag
         // Prevent native touch actions on image too
         img.style.touchAction = 'none';
-        img.style.webkitUserDrag = 'none'; // Webkit specific disable
         img.style.userSelect = 'none';
 
         const tooltip = document.createElement('div');
@@ -261,10 +267,16 @@ document.addEventListener('DOMContentLoaded', () => {
         tooltip.textContent = item.title;
         wrapper.appendChild(img);
         wrapper.appendChild(tooltip);
-        img.addEventListener('dragstart', () => {
+        img.addEventListener('dragstart', (e) => {
             draggedItem = item;
             draggedFrom = source;
             img.classList.add('dragging');
+
+            // Standardize drag data for robustness
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', JSON.stringify(item));
+            }
         });
         img.addEventListener('dragend', () => img.classList.remove('dragging'));
 
@@ -276,10 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return wrapper;
     }
 
-    // Touch Handling Variables
-    let touchDragItem = null; // The visual clone
-    let touchDragOffsetX = 0;
-    let touchDragOffsetY = 0;
+
 
     function handleTouchStart(e, item, source) {
         if (e.touches.length > 1) return;
@@ -992,11 +1001,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     function setupEventListeners() {
         addTierBtn.addEventListener('click', () => {
-            if (tiers.length < 7) {
-                const nextConfig = tierConfig[tiers.length];
-                tiers.push({ name: nextConfig.name, color: nextConfig.color, items: [] });
-                renderTiers();
-            }
+            const defaultCfg = DEFAULT_TIER_CONFIG[tiers.length % DEFAULT_TIER_CONFIG.length] || DEFAULT_TIER_CONFIG[0];
+            tiers.push({ name: defaultCfg.name, color: defaultCfg.color, items: [] });
+            renderTiers();
+            saveState();
         });
         remTierBtn.addEventListener('click', () => {
             if (tiers.length > 0) {
@@ -1004,6 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 pool.push(...removed.items);
                 renderTiers();
                 renderPool();
+                saveState();
             }
         });
         poolItems.addEventListener('dragover', handleDragOver);
@@ -1106,6 +1115,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Settings modal
         settingsBtn.addEventListener('click', openSettingsModal);
+
+        const addTierSettingsBtn = document.getElementById('add-tier-settings-btn');
+        if (addTierSettingsBtn) {
+            addTierSettingsBtn.addEventListener('click', () => {
+                const defaultCfg = DEFAULT_TIER_CONFIG[tiers.length % DEFAULT_TIER_CONFIG.length] || DEFAULT_TIER_CONFIG[0];
+                tiers.push({ name: 'New', color: defaultCfg.color, items: [] });
+                renderTiers();
+                saveState();
+                populateSettingsModal();
+                setTimeout(() => {
+                    tierSettingsContainer.scrollTop = tierSettingsContainer.scrollHeight;
+                }, 50);
+            });
+        }
+
         closeSettingsBtn.addEventListener('click', closeSettingsModal);
         saveSettingsBtn.addEventListener('click', saveSettings);
         resetSettingsBtn.addEventListener('click', resetSettings);
@@ -1190,6 +1214,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 option.textContent = opt.text;
                 select.appendChild(option);
             });
+            // Fix: Explicitly set value to ensure it's not empty or undefined
+            select.value = 'all';
         });
     }
 
@@ -1225,7 +1251,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        if (formatValue !== 'all') results = results.filter(item => item.format === formatValue);
+        if (formatValue && formatValue !== 'all') results = results.filter(item => item.format === formatValue);
         if (activeTab === 'sync' && statusValue !== 'all') results = results.filter(item => item.userStatus === statusValue);
 
         results.sort((a, b) => {
@@ -1265,84 +1291,102 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsModal.classList.add('hidden');
     }
 
-    // Populate the settings modal with current tier configuration
+    // Populate Settings Modal with new design
     function populateSettingsModal() {
         tierSettingsContainer.innerHTML = '';
 
-        tierConfig.forEach((tier, index) => {
+        tiers.forEach((tier, index) => {
             const row = document.createElement('div');
             row.className = 'tier-setting-row';
+
+            // ID column removed as requested
+
             row.innerHTML = `
-            <div class="tier-color-preview" style="background-color: ${tier.color}"></div>
-            <input type="text" class="tier-name-input" data-tier-id="${tier.id}" value="${tier.name}" maxlength="3">
-            <input type="color" class="tier-color-input" data-tier-id="${tier.id}" value="${tier.color}">
+            <div class="tier-color-box" style="background-color: ${tier.color}"></div>
+            <input type="text" class="tier-name-input-modern" value="${tier.name}">
+            <button class="color-picker-btn">
+                <i class="fas fa-palette text-neon-pink"></i>
+                <input type="color" class="color-picker-input-hidden" value="${tier.color}">
+            </button>
+            <div class="w-[30px] flex justify-center">
+                ${tiers.length > 1 ? '<i class="fas fa-trash delete-tier-btn" title="Delete Tier"></i>' : ''}
+            </div>
         `;
 
-            // Update color preview when color changes
-            const colorInput = row.querySelector('.tier-color-input');
-            const colorPreview = row.querySelector('.tier-color-preview');
+            // Listeners
+            const nameInput = row.querySelector('.tier-name-input-modern');
+            const colorInput = row.querySelector('.color-picker-input-hidden');
+            const colorBox = row.querySelector('.tier-color-box');
+            const deleteBtn = row.querySelector('.delete-tier-btn');
+
+            // Name Change
+            nameInput.addEventListener('input', debounce((e) => {
+                tier.name = e.target.value;
+                renderTiers();
+                saveState();
+            }, 300));
+
+            // Color Change
             colorInput.addEventListener('input', (e) => {
-                colorPreview.style.backgroundColor = e.target.value;
+                tier.color = e.target.value;
+                colorBox.style.backgroundColor = tier.color;
+                renderTiers();
+                saveState();
             });
+
+            // Delete Tier
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => {
+                    if (confirm('Delete this tier? Items will be moved to pool.')) {
+                        pool.push(...tier.items);
+                        tiers.splice(index, 1);
+                        renderTiers();
+                        renderPool();
+                        saveState();
+                        populateSettingsModal();
+                    }
+                });
+            }
 
             tierSettingsContainer.appendChild(row);
         });
     }
 
-    // Save settings from modal to tierConfig and localStorage
     function saveSettings() {
-        const nameInputs = tierSettingsContainer.querySelectorAll('.tier-name-input');
-        const colorInputs = tierSettingsContainer.querySelectorAll('.tier-color-input');
-
-        nameInputs.forEach((input, index) => {
-            tierConfig[index].name = input.value || tierConfig[index].name;
-        });
-
-        colorInputs.forEach((input, index) => {
-            tierConfig[index].color = input.value;
-        });
-
-        // Persist to localStorage
-        localStorage.setItem('aniTierList_tierConfig', JSON.stringify(tierConfig));
-
-        // Update existing tiers with new names and colors (preserve items)
-        tiers.forEach((tier, index) => {
-            if (tierConfig[index]) {
-                tier.name = tierConfig[index].name;
-                tier.color = tierConfig[index].color;
-            }
-        });
-
-        // Re-render the tier list
-        renderTiers();
-
-        // Close modal
-        closeSettingsModal();
-
-        // Visual feedback
-        saveSettingsBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Saved!';
-        setTimeout(() => {
-            saveSettingsBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Settings';
-        }, 1000);
+        // Auto-save is implemented directly in listeners
     }
 
     // Reset tierConfig to defaults
     function resetSettings() {
-        if (!confirm('Reset all tier labels and colors to defaults?')) return;
+        if (!confirm('Reset all tier labels and colors to defaults? Items will be moved to pool.')) return;
 
-        tierConfig = JSON.parse(JSON.stringify(DEFAULT_TIER_CONFIG));
-        localStorage.setItem('aniTierList_tierConfig', JSON.stringify(tierConfig));
+        // 1. Reset Data
+        const defaults = JSON.parse(JSON.stringify(DEFAULT_TIER_CONFIG));
+        const allItems = tiers.flatMap(t => t.items);
 
-        // Update existing tiers
-        tiers.forEach((tier, index) => {
-            if (tierConfig[index]) {
-                tier.name = tierConfig[index].name;
-                tier.color = tierConfig[index].color;
-            }
-        });
+        // Re-construct tiers
+        tiers = defaults.map(d => ({
+            name: d.name,
+            color: d.color,
+            items: []
+        }));
 
+        // Move items to pool
+        pool.push(...allItems);
+        pool = [...new Map(pool.map(item => [item.id, item])).values()];
+
+        // 2. Clear Persistence to force fresh state
+        localStorage.removeItem('aniTierList_tiers');
+        localStorage.removeItem('aniTierList_pool');
+
+        // 3. Render and Save
         renderTiers();
+        renderPool();
+        saveState();
         populateSettingsModal();
+
+        // 4. Feedback
+        // alert('Settings have been reset to default.');
     }
 
     // Character Search - Full API Implementation

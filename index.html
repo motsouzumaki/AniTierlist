@@ -44,27 +44,40 @@
     <!-- Settings Modal -->
     <div id="settings-modal"
         class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
-        <div
-            class="bg-base-bg border-2 border-neon-pink p-6 rounded-lg shadow-[0_0_20px_rgba(255,0,255,0.5)] max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
-            <div class="flex justify-between items-center mb-6 border-b border-neon-pink/30 pb-4">
-                <h2 class="text-2xl font-orbitron text-neon-pink">
-                    <i class="fas fa-cog mr-2"></i>TIER_SETTINGS
-                </h2>
-                <button id="close-settings-btn" class="text-gray-400 hover:text-white text-2xl">
-                    <i class="fas fa-times"></i>
+        <div class="bg-base-bg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto custom-scrollbar relative">
+
+            <div class="tier-settings-header">
+                <h2 class="tier-settings-title">Edit Tiers</h2>
+                <button id="close-settings-btn" class="close-btn-styled">
+                    <i class="fas fa-times mr-1"></i> Close
                 </button>
             </div>
-            <div id="tier-settings-container" class="flex flex-col gap-4">
+
+            <div class="tier-list-header-row flex items-center gap-4">
+                <!-- ID column removed as requested -->
+                <span class="w-[32px]"></span> <!-- Color Box spacer -->
+                <span class="flex-1 pl-2">Conlon Type</span> <!-- Label as requested "Conlon Type" -->
+                <span class="w-[40px]"></span> <!-- Palette spacer -->
+                <span class="w-[30px]"></span> <!-- Delete spacer -->
             </div>
-            <div class="flex gap-4 mt-6 pt-4 border-t border-neon-pink/30">
-                <button id="save-settings-btn"
-                    class="flex-1 bg-neon-pink text-black py-2 px-4 font-bold uppercase hover:bg-white transition-colors rounded">
-                    <i class="fas fa-save mr-2"></i>Save Settings
+
+            <div id="tier-settings-container" class="flex flex-col gap-2">
+                <!-- Javascript will populate rows here -->
+            </div>
+
+            <button id="add-tier-settings-btn" class="add-tier-row-btn">
+                <i class="fas fa-plus mr-2"></i> Add New Tier
+            </button>
+
+            <!-- Reset triggers -->
+            <div class="flex justify-center mt-4">
+                <button id="reset-settings-btn" class="text-xs text-red-400 hover:text-red-300 underline">
+                    Reset to Default
                 </button>
-                <button id="reset-settings-btn"
-                    class="flex-1 border border-gray-500 text-gray-400 py-2 px-4 font-bold uppercase hover:bg-gray-700 hover:text-white transition-colors rounded">
-                    <i class="fas fa-undo mr-2"></i>Reset
-                </button>
+            </div>
+
+            <div class="settings-footer-note">
+                Changes saved automatically.
             </div>
         </div>
     </div>
