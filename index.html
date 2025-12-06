@@ -43,27 +43,37 @@
 
     <!-- Settings Modal -->
     <div id="settings-modal"
-        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
         <div
-            class="bg-base-bg border-2 border-neon-pink p-6 rounded-lg shadow-[0_0_20px_rgba(255,0,255,0.5)] max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
-            <div class="flex justify-between items-center mb-6 border-b border-neon-pink/30 pb-4">
-                <h2 class="text-2xl font-orbitron text-neon-pink">
-                    <i class="fas fa-cog mr-2"></i>TIER_SETTINGS
+            class="bg-base-bg border-2 border-neon-pink p-6 rounded-lg shadow-[0_0_20px_rgba(255,0,255,0.5)] max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+
+            <div class="modal-header flex justify-between items-center mb-6 border-b border-neon-pink/30 pb-4 shrink-0">
+                <h2 class="modal-title text-2xl font-orbitron text-neon-pink">
+                    <i class="fas fa-cog mr-2"></i>TIER_CONFIG
                 </h2>
-                <button id="close-settings-btn" class="text-gray-400 hover:text-white text-2xl">
+                <button id="close-settings-btn" class="text-gray-400 hover:text-white text-2xl transition-colors">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div id="tier-settings-container" class="flex flex-col gap-4">
+
+            <div class="modal-body flex-1 overflow-y-auto pink-scrollbar pr-2">
+                <div id="tierSettingsList" class="settings-list flex flex-col gap-3">
+                    <!-- Dynamic Rows Will Be Injected Here -->
+                </div>
+
+                <div class="tier-actions mt-4">
+                    <button id="addTierConfigBtn" class="action-btn-secondary">
+                        <i class="fas fa-plus mr-2"></i> Add New Tier
+                    </button>
+                </div>
             </div>
-            <div class="flex gap-4 mt-6 pt-4 border-t border-neon-pink/30">
-                <button id="save-settings-btn"
-                    class="flex-1 bg-neon-pink text-black py-2 px-4 font-bold uppercase hover:bg-white transition-colors rounded">
-                    <i class="fas fa-save mr-2"></i>Save Settings
+
+            <div class="modal-footer flex gap-4 mt-6 pt-4 border-t border-neon-pink/30 shrink-0">
+                <button id="resetTiersBtn" class="action-btn-tertiary flex-1">
+                    <i class="fas fa-undo mr-1"></i> Reset
                 </button>
-                <button id="reset-settings-btn"
-                    class="flex-1 border border-gray-500 text-gray-400 py-2 px-4 font-bold uppercase hover:bg-gray-700 hover:text-white transition-colors rounded">
-                    <i class="fas fa-undo mr-2"></i>Reset
+                <button id="saveSettingsBtn" class="action-btn-primary flex-1">
+                    <i class="fas fa-save mr-1"></i> Save Changes
                 </button>
             </div>
         </div>

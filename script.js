@@ -198,9 +198,13 @@ const layoutToggleBtnSeasons = document.getElementById('layout-toggle-btn-season
 const settingsModal = document.getElementById('settings-modal');
 const settingsBtn = document.getElementById('settings-btn');
 const closeSettingsBtn = document.getElementById('close-settings-btn');
-const saveSettingsBtn = document.getElementById('save-settings-btn');
-const resetSettingsBtn = document.getElementById('reset-settings-btn');
-const tierSettingsContainer = document.getElementById('tier-settings-container');
+const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+const resetSettingsBtn = document.getElementById('resetTiersBtn');
+const tierSettingsList = document.getElementById('tierSettingsList');
+const addTierConfigBtn = document.getElementById('addTierConfigBtn');
+const tierSettingsContainer = document.getElementById('tierSettingsList'); // Alias for backward compatibility if needed, but we use tierSettingsList
+
+let tempTierConfig = []; // Temporary state for the modal
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -886,6 +890,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchNote.className = 'search-note text-xs text-gray-400 mt-2 mb-4 italic';
             }
         }
+
+        // Toggle Scrollbar Style
+        if (searchType === 'CHARACTER') {
+            searchResultsContainer.classList.add('pink-scrollbar');
+            searchResultsContainer.classList.remove('custom-scrollbar');
+        } else {
+            searchResultsContainer.classList.remove('pink-scrollbar');
+            searchResultsContainer.classList.add('custom-scrollbar');
+        }
     }
 
     // Helper to set active tab styling
@@ -932,6 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         remTierBtn.addEventListener('click', () => {
+            // Logic to remove the last tier
             if (tiers.length > 0) {
                 const removed = tiers.pop();
                 pool.push(...removed.items);
@@ -939,6 +953,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderPool();
             }
         });
+
+        // Modal Event Listeners
+        settingsBtn.addEventListener('click', openSettingsModal);
+        closeSettingsBtn.addEventListener('click', closeSettingsModal);
+        saveSettingsBtn.addEventListener('click', saveSettings);
+        resetSettingsBtn.addEventListener('click', resetSettings);
+
+        if (addTierConfigBtn) {
+            addTierConfigBtn.addEventListener('click', () => {
+                // Add a new default tier to temporary config
+                // Pick color from default config if available, or random/last
+                const defaultColors = ['#FF5733', '#33FF57', '#3357FF', '#F333FF', '#FFFF33'];
+                const nextColor = defaultColors[tempTierConfig.length % defaultColors.length];
+
+                tempTierConfig.push({
+                    id: Date.now(), // Unique ID
+                    name: 'NEW',
+                    color: nextColor
+                });
+                renderTierSettingsList();
+            });
+        }
         poolItems.addEventListener('dragover', handleDragOver);
         poolItems.addEventListener('drop', (e) => handleDrop(e, 'pool'));
 
@@ -1193,7 +1229,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Open the settings modal and populate it with current tier config
     function openSettingsModal() {
-        populateSettingsModal();
+        // Create a deep copy of tierConfig to allow valid cancellation/editing
+        // But since we want to edit the *Current Structure* (which might differ from global tierConfig if user added tiers via main button),
+        // we should actually probably sync from `tiers` if we want to capture current names?
+        // However, `tierConfig` is the canonical source. 
+        // Let's stick to `tierConfig` being the source.
+        tempTierConfig = JSON.parse(JSON.stringify(tierConfig));
+        renderTierSettingsList();
         settingsModal.classList.remove('hidden');
     }
 
@@ -1202,47 +1244,82 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsModal.classList.add('hidden');
     }
 
-    // Populate the settings modal with current tier configuration
-    function populateSettingsModal() {
-        tierSettingsContainer.innerHTML = '';
+    // Render the dynamic list of tiers in the modal
+    function renderTierSettingsList() {
+        tierSettingsList.innerHTML = '';
 
-        tierConfig.forEach((tier, index) => {
+        if (tempTierConfig.length === 0) {
+            tierSettingsContainer.innerHTML = '<div class="text-gray-500 text-center py-4">No tiers defined. Add one!</div>';
+        }
+
+        tempTierConfig.forEach((tier, index) => {
             const row = document.createElement('div');
             row.className = 'tier-setting-row';
-            row.innerHTML = `
-            <div class="tier-color-preview" style="background-color: ${tier.color}"></div>
-            <input type="text" class="tier-name-input" data-tier-id="${tier.id}" value="${tier.name}" maxlength="3">
-            <input type="color" class="tier-color-input" data-tier-id="${tier.id}" value="${tier.color}">
-        `;
+            row.dataset.index = index; // Store index to easily identify for removal
 
-            // Update color preview when color changes
+            row.innerHTML = `
+                <input type="color" class="tier-color-input" value="${tier.color}">
+                <input type="text" class="tier-name-input" value="${tier.name}" maxlength="10" placeholder="Tier Name">
+                <button class="remove-tier-btn" title="Remove Tier">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+
+            // Event Listeners for inputs
             const colorInput = row.querySelector('.tier-color-input');
-            const colorPreview = row.querySelector('.tier-color-preview');
+            const nameInput = row.querySelector('.tier-name-input');
+            const removeBtn = row.querySelector('.remove-tier-btn');
+
             colorInput.addEventListener('input', (e) => {
-                colorPreview.style.backgroundColor = e.target.value;
+                tier.color = e.target.value;
             });
 
-            tierSettingsContainer.appendChild(row);
+            nameInput.addEventListener('input', (e) => {
+                tier.name = e.target.value;
+            });
+
+            removeBtn.addEventListener('click', () => {
+                // Remove this tier from temp config
+                tempTierConfig.splice(index, 1);
+                renderTierSettingsList(); // Re-render
+            });
+
+            tierSettingsList.appendChild(row);
         });
     }
 
     // Save settings from modal to tierConfig and localStorage
     function saveSettings() {
-        const nameInputs = tierSettingsContainer.querySelectorAll('.tier-name-input');
-        const colorInputs = tierSettingsContainer.querySelectorAll('.tier-color-input');
-
-        nameInputs.forEach((input, index) => {
-            tierConfig[index].name = input.value || tierConfig[index].name;
-        });
-
-        colorInputs.forEach((input, index) => {
-            tierConfig[index].color = input.value;
-        });
+        // Commit temp changes to global config
+        tierConfig = JSON.parse(JSON.stringify(tempTierConfig));
 
         // Persist to localStorage
         localStorage.setItem('aniTierList_tierConfig', JSON.stringify(tierConfig));
 
-        // Update existing tiers with new names and colors (preserve items)
+        // Sync `tiers` (Active State) to match `tierConfig` (New Definition)
+        // 1. Gather all existing items to handle safely
+        //    (We don't want to lose items if a tier is removed or moved)
+        //    Strategy: We will resize `tiers` array.
+
+        // If new config is smaller, we pop tiers and move items to pool
+        while (tiers.length > tierConfig.length) {
+            const removed = tiers.pop();
+            if (removed.items.length > 0) {
+                pool.push(...removed.items);
+            }
+        }
+
+        // If new config is larger, we push new empty tiers
+        while (tiers.length < tierConfig.length) {
+            const cfg = tierConfig[tiers.length];
+            tiers.push({
+                name: cfg.name,
+                color: cfg.color,
+                items: []
+            });
+        }
+
+        // Now update properties of all tiers to match config
         tiers.forEach((tier, index) => {
             if (tierConfig[index]) {
                 tier.name = tierConfig[index].name;
@@ -1250,16 +1327,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Re-render the tier list
+        // Re-render everything
         renderTiers();
+        renderPool();
 
         // Close modal
         closeSettingsModal();
 
         // Visual feedback
         saveSettingsBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Saved!';
+        saveSettingsBtn.classList.add('bg-green-500', 'text-white');
         setTimeout(() => {
-            saveSettingsBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Settings';
+            saveSettingsBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Changes';
+            saveSettingsBtn.classList.remove('bg-green-500', 'text-white');
         }, 1000);
     }
 
@@ -1267,19 +1347,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetSettings() {
         if (!confirm('Reset all tier labels and colors to defaults?')) return;
 
-        tierConfig = JSON.parse(JSON.stringify(DEFAULT_TIER_CONFIG));
-        localStorage.setItem('aniTierList_tierConfig', JSON.stringify(tierConfig));
-
-        // Update existing tiers
-        tiers.forEach((tier, index) => {
-            if (tierConfig[index]) {
-                tier.name = tierConfig[index].name;
-                tier.color = tierConfig[index].color;
-            }
-        });
-
-        renderTiers();
-        populateSettingsModal();
+        tempTierConfig = JSON.parse(JSON.stringify(DEFAULT_TIER_CONFIG));
+        renderTierSettingsList();
     }
 
     // Character Search - Full API Implementation

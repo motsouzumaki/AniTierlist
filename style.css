@@ -47,6 +47,31 @@ body {
     scrollbar-color: #00dfff #17212b;
 }
 
+/* Pink Scrollbar Variant */
+.pink-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.pink-scrollbar::-webkit-scrollbar-track {
+    background: #17212b;
+    border: 1px solid rgba(255, 0, 255, 0.2);
+}
+
+.pink-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #FF00FF 0%, #b300b3 100%);
+    border-radius: 4px;
+}
+
+.pink-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ff66ff 0%, #FF00FF 100%);
+}
+
+.pink-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #FF00FF #17212b;
+}
+
 /* Tier Box Styling (Glassmorphism) */
 .box {
     display: flex;
@@ -145,15 +170,16 @@ body {
     max-height: 400px;
 }
 
-#search-results > div,
-#sync-results > div,
-#season-results > div {
+#search-results>div,
+#sync-results>div,
+#season-results>div {
     width: 100%;
     box-sizing: border-box;
     height: auto;
 }
 
 @media (max-width: 1200px) {
+
     #search-results,
     #sync-results,
     #season-results {
@@ -162,6 +188,7 @@ body {
 }
 
 @media (max-width: 900px) {
+
     #search-results,
     #sync-results,
     #season-results {
@@ -170,6 +197,7 @@ body {
 }
 
 @media (max-width: 600px) {
+
     #search-results,
     #sync-results,
     #season-results {
@@ -256,7 +284,7 @@ body {
     width: 100%;
 }
 
-#top-control-panel > div {
+#top-control-panel>div {
     min-width: 0;
 }
 
@@ -365,16 +393,18 @@ body {
 }
 
 @media (max-width: 600px) {
+
     #search-results.list-view,
     #sync-results.list-view,
     #season-results.list-view {
         grid-template-columns: 1fr !important;
     }
 }
+
 /* List view - image container fixed width */
-#search-results.list-view .search-result-card > div:first-child,
-#sync-results.list-view .search-result-card > div:first-child,
-#season-results.list-view .search-result-card > div:first-child {
+#search-results.list-view .search-result-card>div:first-child,
+#sync-results.list-view .search-result-card>div:first-child,
+#season-results.list-view .search-result-card>div:first-child {
     width: 60px !important;
     min-width: 60px !important;
     flex-shrink: 0;
@@ -422,6 +452,7 @@ body {
 .select-series-btn {
     box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
 }
+
 .select-series-btn:hover {
     box-shadow: 0 0 15px rgba(147, 51, 234, 0.8);
 }
@@ -432,3 +463,134 @@ body {
     user-select: none;
 }
 
+/* --- New Settings Modal Styles --- */
+#tierSettingsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tier-setting-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.tier-setting-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Refined Inputs */
+.tier-name-input {
+    flex: 1;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 0 !important;
+    color: white !important;
+    padding: 4px 8px !important;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.1rem;
+    text-align: left !important;
+}
+
+.tier-name-input:focus {
+    outline: none !important;
+    border-bottom-color: #00dfff !important;
+}
+
+.tier-color-input {
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.tier-color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.tier-color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 3px;
+}
+
+.remove-tier-btn {
+    color: #ef4444;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.remove-tier-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* Action Buttons */
+.action-btn-primary {
+    background: #FF00FF;
+    color: black;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-radius: 6px;
+    transition: all 0.3s;
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+}
+
+.action-btn-primary:hover {
+    background: white;
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
+}
+
+.action-btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    color: #ccc;
+    font-size: 0.9rem;
+    padding: 10px;
+    border-radius: 6px;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: white;
+    color: white;
+}
+
+.action-btn-tertiary {
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #f87171;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    padding: 10px 20px;
+    border-radius: 6px;
+    transition: all 0.3s;
+}
+
+.action-btn-tertiary:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
