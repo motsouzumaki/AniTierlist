@@ -445,10 +445,10 @@ document.addEventListener('DOMContentLoaded', () => {
             currentResults = results;
             globalFilterControlsSync.style.display = 'flex';
             applyFiltersAndSort();
-            syncStatus.innerHTML = `< span class="text-green-400" > Fetched ${results.length} items!</span > `;
+            syncStatus.innerHTML = `<span class="text-green-400">Fetched ${results.length} items!</span>`;
         } catch (error) {
             console.error(error);
-            syncStatus.innerHTML = `< span class="text-red-500" > Error: ${error.message}</span > `;
+            syncStatus.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
         } finally {
             syncBtn.disabled = false;
         }
@@ -628,10 +628,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleTouchStart(e, item, source) {
         if (e.touches.length > 1) return; // Ignore multi-touch
         e.preventDefault();
-        
+
         const originalEl = e.currentTarget;
         originalTouchedItem = originalEl;
-        
+
         draggedItem = item;
         draggedFrom = source;
 
@@ -655,14 +655,14 @@ document.addEventListener('DOMContentLoaded', () => {
         clone.style.zIndex = '9999';
         clone.style.margin = '0';
         clone.style.pointerEvents = 'none'; // Crucial so we can read elementFromPoint below it
-        
+
         // Add visual flair
         clone.classList.add('mobile-dragging');
         clone.style.transform = `translate3d(0, -70px, 0) scale(1.15)`; // Initial pop
 
         // Append to body so it sits above EVERYTHING (escape overflow:hidden contexts)
         document.body.appendChild(clone);
-        
+
         // Dim the original slightly to indicate it's being moved
         originalEl.style.opacity = '0.3';
     }
@@ -673,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const touch = e.touches[0];
         const dx = touch.clientX - initialX;
         const dy = touch.clientY - initialY;
-        
+
         // Move the clone
         currentTouchedItem.style.transform = `translate3d(${dx}px, ${dy - 70}px, 0) scale(1.15)`;
     }
@@ -688,13 +688,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hide clone to check what's underneath
         currentTouchedItem.style.display = 'none';
         const targetElement = document.elementFromPoint(x, y);
-        
+
         let destination = null;
-        
+
         if (targetElement) {
             const tierRow = targetElement.closest('.items');
             const poolRow = targetElement.closest('#pool-items');
-            
+
             if (poolRow) {
                 destination = 'pool';
             } else if (tierRow && tierRow.dataset.tierIndex !== undefined) {
@@ -705,7 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (destination) {
             // Mock event for handleDrop
             const mockEvent = {
-                preventDefault: () => {},
+                preventDefault: () => { },
                 clientX: x,
                 clientY: y
             };
