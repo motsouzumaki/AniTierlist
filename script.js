@@ -658,7 +658,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const dx = touch.clientX - initialX;
         const dy = touch.clientY - initialY;
 
-        currentTouchedItem.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+        // Initial "Pop"
+        currentTouchedItem.style.transform = `translate3d(0, -70px, 0) scale(1.15)`;
+        currentTouchedItem.classList.add('mobile-dragging');
+    }
+
+    function handleTouchMove(e) {
+        if (!currentTouchedItem) return;
+        e.preventDefault(); // Stop scrolling while dragging
+        const touch = e.touches[0];
+        const dx = touch.clientX - initialX;
+        const dy = touch.clientY - initialY;
+
+        // Offset by -70px vertically so the user can see what they are dragging above their finger
+        currentTouchedItem.style.transform = `translate3d(${dx}px, ${dy - 70}px, 0) scale(1.15)`;
     }
 
     function handleTouchEnd(e) {
@@ -698,6 +711,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Invalid drop: Snap back
             currentTouchedItem.style.position = '';
+            currentTouchedItem.classList.remove('mobile-dragging');
+            currentTouchedItem.style.zIndex = '';
+            currentTouchedItem.style.transform = '';
             currentTouchedItem.style.zIndex = '';
             currentTouchedItem.style.transform = '';
             currentTouchedItem.style.left = '';

@@ -143,6 +143,18 @@ body {
     border: 2px dashed #00dfff;
 }
 
+/* Mobile Dragging Effect */
+.mobile-dragging {
+    opacity: 1 !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 223, 255, 0.8) !important;
+    border: 2px solid #00dfff !important;
+    z-index: 9999 !important;
+    transition: none !important;
+    /* Remove transition for instant follow */
+    pointer-events: none;
+    /* Ensure elementFromPoint ignores this */
+}
+
 /* Search Result Items - Vertical Card Layout */
 .search-result-card {
     background: rgba(0, 0, 0, 0.4);
