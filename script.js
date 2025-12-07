@@ -119,7 +119,8 @@ let activeTab = 'search';
 let lastSeriesSearchResults = [];
 
 // Touch Drag State
-let currentTouchedItem = null;
+let currentTouchedItem = null; // This will now point to the CLONED element
+let originalTouchedItem = null; // Reference to the original element
 let initialX = 0;
 let initialY = 0;
 
@@ -626,29 +627,44 @@ document.addEventListener('DOMContentLoaded', () => {
     // Touch Handling Functions
     function handleTouchStart(e, item, source) {
         if (e.touches.length > 1) return; // Ignore multi-touch
-        // We do NOT call preventDefault here immediately if we want to allow scrolling when NOT dragging.
-        // But prompt says: "Call e.preventDefault() to prevent scrolling and allow dragging"
         e.preventDefault();
-
-        currentTouchedItem = e.currentTarget;
+        
+        const originalEl = e.currentTarget;
+        originalTouchedItem = originalEl;
+        
         draggedItem = item;
         draggedFrom = source;
+
+        // Clone the element that was touched
+        const clone = originalEl.cloneNode(true);
+        currentTouchedItem = clone; // We drag the clone
 
         const touch = e.touches[0];
         initialX = touch.clientX;
         initialY = touch.clientY;
 
-        // Apply temporary styling
-        const rect = currentTouchedItem.getBoundingClientRect();
+        // Get geometry of original to position clone exactly over it initially
+        const rect = originalEl.getBoundingClientRect();
 
-        currentTouchedItem.style.width = rect.width + 'px';
-        currentTouchedItem.style.height = rect.height + 'px';
-        currentTouchedItem.style.position = 'fixed';
-        currentTouchedItem.style.zIndex = '1000';
-        currentTouchedItem.style.left = rect.left + 'px';
-        currentTouchedItem.style.top = rect.top + 'px';
-        currentTouchedItem.style.margin = '0';
-        currentTouchedItem.classList.add('dragging');
+        // Style the clone
+        clone.style.width = rect.width + 'px';
+        clone.style.height = rect.height + 'px';
+        clone.style.position = 'fixed'; // Must be fixed to viewport
+        clone.style.left = rect.left + 'px';
+        clone.style.top = rect.top + 'px';
+        clone.style.zIndex = '9999';
+        clone.style.margin = '0';
+        clone.style.pointerEvents = 'none'; // Crucial so we can read elementFromPoint below it
+        
+        // Add visual flair
+        clone.classList.add('mobile-dragging');
+        clone.style.transform = `translate3d(0, -70px, 0) scale(1.15)`; // Initial pop
+
+        // Append to body so it sits above EVERYTHING (escape overflow:hidden contexts)
+        document.body.appendChild(clone);
+        
+        // Dim the original slightly to indicate it's being moved
+        originalEl.style.opacity = '0.3';
     }
 
     function handleTouchMove(e) {
@@ -657,20 +673,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const touch = e.touches[0];
         const dx = touch.clientX - initialX;
         const dy = touch.clientY - initialY;
-
-        // Initial "Pop"
-        currentTouchedItem.style.transform = `translate3d(0, -70px, 0) scale(1.15)`;
-        currentTouchedItem.classList.add('mobile-dragging');
-    }
-
-    function handleTouchMove(e) {
-        if (!currentTouchedItem) return;
-        e.preventDefault(); // Stop scrolling while dragging
-        const touch = e.touches[0];
-        const dx = touch.clientX - initialX;
-        const dy = touch.clientY - initialY;
-
-        // Offset by -70px vertically so the user can see what they are dragging above their finger
+        
+        // Move the clone
         currentTouchedItem.style.transform = `translate3d(${dx}px, ${dy - 70}px, 0) scale(1.15)`;
     }
 
@@ -681,18 +685,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const x = touch.clientX;
         const y = touch.clientY;
 
-        // Temporarily hide to find element underneath
-        const prevDisplay = currentTouchedItem.style.display;
+        // Hide clone to check what's underneath
         currentTouchedItem.style.display = 'none';
         const targetElement = document.elementFromPoint(x, y);
-        currentTouchedItem.style.display = prevDisplay;
-
+        
         let destination = null;
-
+        
         if (targetElement) {
             const tierRow = targetElement.closest('.items');
             const poolRow = targetElement.closest('#pool-items');
-
+            
             if (poolRow) {
                 destination = 'pool';
             } else if (tierRow && tierRow.dataset.tierIndex !== undefined) {
@@ -703,38 +705,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (destination) {
             // Mock event for handleDrop
             const mockEvent = {
-                preventDefault: () => { },
+                preventDefault: () => {},
                 clientX: x,
                 clientY: y
             };
             handleDrop(mockEvent, destination);
-        } else {
-            // Invalid drop: Snap back
-            currentTouchedItem.style.position = '';
-            currentTouchedItem.classList.remove('mobile-dragging');
-            currentTouchedItem.style.zIndex = '';
-            currentTouchedItem.style.transform = '';
-            currentTouchedItem.style.zIndex = '';
-            currentTouchedItem.style.transform = '';
-            currentTouchedItem.style.left = '';
-            currentTouchedItem.style.top = '';
-            currentTouchedItem.style.width = '';
-            currentTouchedItem.style.height = '';
-            currentTouchedItem.style.margin = '';
-            currentTouchedItem.classList.remove('dragging');
         }
 
+        // Cleanup Clone
+        if (currentTouchedItem && currentTouchedItem.parentNode) {
+            currentTouchedItem.parentNode.removeChild(currentTouchedItem);
+        }
         currentTouchedItem = null;
-        initialX = 0;
-        initialY = 0;
 
-        // Note: dragend logic for mouse sets draggedItem = null, but here we do it explicitly if needed.
-        // handleDrop sets draggedItem = null.
-        // If we didn't drop, we should probably reset draggedItem too?
+        // Restore Original
+        if (originalTouchedItem) {
+            originalTouchedItem.style.opacity = '';
+        }
+        originalTouchedItem = null;
+
         if (!destination) {
             draggedItem = null;
             draggedFrom = null;
         }
+
+        initialX = 0;
+        initialY = 0;
     }
 
     // Drag & Drop
