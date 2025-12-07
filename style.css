@@ -606,3 +606,41 @@ body {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
 }
+
+@media (max-width: 600px) {
+    .tier-setting-row {
+        gap: 8px;
+        padding: 6px 8px;
+    }
+
+    .tier-name-input {
+        font-size: 0.9rem;
+        /* Smaller text */
+        padding: 2px 4px !important;
+    }
+
+    .tier-color-input,
+    .remove-tier-btn {
+        width: 28px;
+        /* Smaller controls */
+        height: 28px;
+    }
+
+    .action-btn-primary,
+    .action-btn-tertiary,
+    .action-btn-secondary {
+        padding: 8px 12px;
+        /* Smaller buttons */
+        font-size: 0.75rem;
+    }
+
+    #settings-modal h2 {
+        font-size: 1.25rem;
+        /* Smaller title */
+    }
+
+    #settings-modal .modal-header {
+        margin-bottom: 0.75rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+}
