@@ -3,17 +3,17 @@
 ## Overview
 AniTierlist is an easy‑to‑use web app for creating tier lists for **Anime**, **Manga**, and **Characters**. It focuses on fast search, clean layout, and simple drag‑and‑drop tools, without extra complexity.
 
-## What You Can Do
-- **Instant Search** – Just type and see results update automatically.
-- **Character Search** – Search by character name or by series title.
-- **Tier List Builder** – Drag items into S–F tiers and rename or recolor tiers.
-- **Export Image** – Save your final tier list as a PNG.
-- **AniList Sync** – Import your AniList lists (Completed, Watching, Planning…).
-- **Season Browser** – Browse anime by season and year.
-- **Filters** – Sort and filter by type, status, gender, and more.
-- **Layout Options** – Switch between grid view and list view.
-- **Mobile Friendly** – Works smoothly on phones and tablets.
-- **Theme Options** – Different neon themes for each section.
+## Why You'll Love It
+- **Never Lose Your Place** – Your search stays waiting for you even if you switch tabs or refresh the page.
+- **Instant Results** – Just start typing to find Anime, Manga, or Characters instantly.
+- **Find Characters Your Way** – Look up characters by their name or find everyone from a specific series.
+- **Easy Tier Builder** – Drag and drop to rank your favorites. Customize colors, rename tiers, and make it your own.
+- **Sync with AniList** – Log in to pull your own "Watching" or "Completed" lists directly into the tier maker.
+- **Explore Seasons** – Browse what's airing this season without messing up your main search filters.
+- **Perfect for Mobile** – A smooth experience on your phone with easy-to-read text, smaller icons, and clear controls.
+- **Clean Layout** – The unranked pool scrolls sideways to save space, keeping your screen clutter-free.
+- **Dark Mode** – Easy on the eyes for those late-night ranking sessions.
+- **Export & Share** – One click to save your masterpiece as an image.
 
 ## Installation & Usage
 1. **Clone the repository**

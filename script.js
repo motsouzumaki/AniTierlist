@@ -140,7 +140,7 @@ const searchBtn = document.getElementById('search-btn');
 const searchResultsContainer = document.getElementById('search-results');
 const typeAnimeBtn = document.getElementById('type-anime');
 const typeMangaBtn = document.getElementById('type-manga');
-const typeCharacterBtn = document.getElementById('type-character');
+const typeCharacterBtn = document.getElementById('type-character'); // Ensure this ID exists in HTML
 const typeAnimeSyncBtn = document.getElementById('type-anime-sync');
 const typeMangaSyncBtn = document.getElementById('type-manga-sync');
 const usernameInput = document.getElementById('username-input');
@@ -207,14 +207,31 @@ const tierSettingsContainer = document.getElementById('tierSettingsList'); // Al
 
 let tempTierConfig = []; // Temporary state for the modal
 
+// Dark Mode Toggle
+const darkModeToggleBtn = document.getElementById('darkModeToggle');
+
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Dark Mode
+    if (localStorage.getItem('aniTierList_darkMode') === 'true' ||
+        (!('aniTierList_darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        if (darkModeToggleBtn) darkModeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
+    } else {
+        document.documentElement.classList.remove('dark');
+        if (darkModeToggleBtn) darkModeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
+    }
+
     loadState();
     renderTiers();
     renderPool();
     setupEventListeners();
+
+    // Explicitly set initial state and update buttons
+    searchType = 'ANIME';
     updateTypeButtons();
     updateFormatFilterOptions('ANIME');
+    initializeSeasonFilters(); // Initialize isolated season filters
     yearInput.value = new Date().getFullYear();
 
     // Rendering
@@ -282,10 +299,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const query = searchInput.value;
         if (!query) return;
-        searchResultsContainer.innerHTML = '<div class="col-span-2 text-center text-neon-blue animate-pulse">Searching...</div>';
+
+        searchResultsContainer.innerHTML = '<div class="col-span-2 text-center text-primary animate-pulse">Searching...</div>';
+
+        // Ensure variable 'type' matches ANILIST enum (ANIME, MANGA)
+        // If searchType is CHARACTER, we handled it above.
+        // If searchType is 'ANIME' or 'MANGA', it's valid.
+
         const gqlQuery = `query ($search: String, $type: MediaType) {
     Page(perPage: 20) {
-        media(search: $search, type: $type, isAdult: false) {
+        media(search: $search, type: $type, isAdult: false, sort: SEARCH_MATCH) {
                 id title { romaji english } coverImage { extraLarge }
                 startDate { year } format popularity averageScore trending
         }
@@ -298,12 +321,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ query: gqlQuery, variables: { search: query, type: searchType } })
             });
             const data = await response.json();
+
+            if (data.errors) {
+                throw new Error(data.errors[0].message);
+            }
+
             currentResults = data.data.Page.media;
             globalFilterControls.style.display = 'flex';
             applyFiltersAndSort();
         } catch (error) {
             console.error(error);
-            searchResultsContainer.innerHTML = '<div class="col-span-2 text-center text-red-500">Error fetching data</div>';
+            searchResultsContainer.innerHTML = `<div class="col-span-full text-center text-red-500">Error: ${error.message}</div>`;
         }
     }
 
@@ -318,54 +346,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         container.innerHTML = '';
         if (!results || results.length === 0) {
-            container.innerHTML = '<div class="col-span-full text-center text-gray-500">No results found</div>';
+            container.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8">No results found</div>';
             return;
         }
         results.forEach(media => {
             const title = media.title.english || media.title.romaji;
             const imgUrl = media.coverImage.extraLarge;
             const isCharacter = media.format === 'CHARACTER';
+
             const card = document.createElement('div');
+            card.className = 'search-result-card group'; // CSS handles hover and border
 
-            // Fix: Only apply pink hover border to Characters, else Blue
-            const borderClass = isCharacter
-                ? 'border-neon-pink/30 hover:border-neon-pink'
-                : 'border-neon-blue/30 hover:border-neon-blue';
+            // Button Color Logic: Characters = Accent (Pink/Rose), Anime = Primary (Indigo)
+            // But for 'Clean' theme, a unified Primary looks better, or Slate for secondary.
+            // Let's use Primary for all to keep it clean, or generic distinct colors.
+            // Reference uses Indigo/Slate. Let's stick to that.
 
-            card.className = `search-result-card flex flex-col rounded overflow-hidden group cursor-pointer border ${borderClass} transition-colors`;
+            const btnClass = 'bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/30';
 
             if (isCharacter) {
                 const gender = media.gender || '';
                 const mediaTitle = media.description || '';
                 card.innerHTML = `
-                <div class="relative w-full overflow-hidden">
-                    <img src="${imgUrl}" class="w-full aspect-[2/3] object-cover group-hover:scale-110 transition-transform duration-500">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
-                        <button class="add-to-pool-btn bg-neon-pink text-black font-bold px-3 py-1 text-[10px] uppercase hover:bg-white hover:text-neon-pink transition-colors shadow-[0_0_10px_#ff00ff]">
-                            <i class="fas fa-plus mr-1"></i> Add
+                <div class="relative w-full aspect-[2/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
+                    <img src="${imgUrl}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button class="add-to-pool-btn ${btnClass} font-bold p-3 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all">
+                            <i class="fas fa-plus"></i>
                         </button>
                     </div>
                 </div>
-                <div class="p-2 flex flex-col flex-1">
-                    <div class="search-result-title text-xs font-bold text-neon-pink truncate mb-1" title="${title}">${title}</div>
-                    <div class="text-[10px] text-gray-400" title="${mediaTitle}">${mediaTitle}</div>
-                    ${gender ? `<div class="text-[10px] text-white opacity-70">${gender}</div>` : ''}
+                <div class="card-content p-3 flex flex-col gap-1">
+                    <div class="text-xs font-bold text-slate-700 dark:text-slate-200 truncate" title="${title}">${title}</div>
+                    <div class="text-[10px] text-slate-400 truncate" title="${mediaTitle}">${mediaTitle}</div>
+                    ${gender ? `<div class="text-[10px] text-slate-500 capitalize">${gender}</div>` : ''}
                 </div>
 `;
             } else {
                 card.innerHTML = `
-                <div class="relative w-full overflow-hidden">
-                    <img src="${imgUrl}" class="w-full aspect-[2/3] object-cover group-hover:scale-110 transition-transform duration-500">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
-                        <button class="add-to-pool-btn bg-neon-blue text-black font-bold px-3 py-1 text-[10px] uppercase hover:bg-white transition-colors shadow-neon">
-                            <i class="fas fa-plus mr-1"></i> Add
+                <div class="relative w-full aspect-[2/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
+                    <img src="${imgUrl}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button class="add-to-pool-btn ${btnClass} font-bold p-3 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all">
+                            <i class="fas fa-plus"></i>
                         </button>
                     </div>
                 </div>
-                <div class="p-2 flex flex-col flex-1">
-                    <div class="search-result-title text-xs font-bold text-neon-blue truncate mb-1" title="${title}">${title}</div>
-                    <div class="text-[10px] text-gray-400">${media.startDate.year || '?'} • ${media.format}</div>
-                    ${media.userStatus ? `<div class="text-[10px] text-neon-pink">${media.userStatus}</div>` : ''}
+                <div class="card-content p-3 flex flex-col gap-1">
+                    <div class="text-xs font-bold text-slate-700 dark:text-slate-200 truncate" title="${title}">${title}</div>
+                    <div class="flex justify-between items-center text-[10px] text-slate-400">
+                        <span>${media.startDate?.year || '?'}</span>
+                        <span class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-slate-500 dark:text-slate-300 font-medium">${media.format}</span>
+                    </div>
+                    ${media.userStatus ? `<div class="text-[10px] font-bold text-primary mt-1">${media.userStatus}</div>` : ''}
                 </div>
 `;
             }
@@ -374,10 +407,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 addToPool({ id: media.id, title: title, img: imgUrl });
                 // Brief visual feedback
-                card.style.opacity = '0.5';
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                }, 300);
+                const img = card.querySelector('img');
+                if (img) {
+                    img.style.transform = 'scale(0.95)';
+                    setTimeout(() => img.style.transform = '', 150);
+                }
             };
 
             // Add button click
@@ -387,10 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Click on entire card also adds
             card.addEventListener('click', addToPoolHandler);
 
-            // Explicitly add listener to title for List View reliability
-            const titleEl = card.querySelector('.search-result-title');
-            if (titleEl) titleEl.addEventListener('click', addToPoolHandler);
-
             container.appendChild(card);
         });
     }
@@ -399,6 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pool.some(i => i.id === item.id)) return;
         if (tiers.some(t => t.items.some(i => i.id === item.id))) return;
         pool.push(item);
+        saveState();
         renderPool();
     }
 
@@ -804,6 +835,7 @@ document.addEventListener('DOMContentLoaded', () => {
         draggedFrom = null;
         renderTiers();
         renderPool();
+        saveState();
     }
 
     // Persistence
@@ -812,12 +844,12 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('aniTierList_pool', JSON.stringify(pool));
         const originalText = saveBtn.innerHTML;
         saveBtn.innerHTML = '<i class="fas fa-check mr-2"></i>SAVED';
-        saveBtn.classList.add('bg-neon-blue', 'text-black');
-        saveBtn.classList.remove('text-neon-blue');
+        saveBtn.classList.add('bg-green-500', 'text-white', 'border-green-500');
+        saveBtn.classList.remove('text-primary');
         setTimeout(() => {
             saveBtn.innerHTML = originalText;
-            saveBtn.classList.remove('bg-neon-blue', 'text-black');
-            saveBtn.classList.add('text-neon-blue');
+            saveBtn.classList.remove('bg-green-500', 'text-white', 'border-green-500');
+            saveBtn.classList.add('text-primary');
         }, 1000);
     }
 
@@ -829,10 +861,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clearRankedTiers() {
-        if (!confirm('Are you sure you want to clear all ranked items? This cannot be undone.')) return;
-        tiers.forEach(tier => tier.items = []);
+        if (!confirm('Are you sure you want to move all ranked items back to the pool?')) return;
+        tiers.forEach(tier => {
+            pool.push(...tier.items);
+            tier.items = [];
+        });
         saveState();
         renderTiers();
+        renderPool();
     }
 
     function clearUnrankedPool() {
@@ -846,42 +882,46 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateTypeButtons() {
         const isAnime = searchType === 'ANIME';
 
-        // Search Tab Buttons
-        // Search Tab Buttons - Reset
-        [typeAnimeBtn, typeMangaBtn].forEach(btn => {
+        const activeClass = ['bg-primary', 'text-white']; // Active State
+        const inactiveClass = ['bg-slate-100', 'dark:bg-slate-800', 'text-slate-500', 'hover:bg-slate-200']; // Inactive State
+
+        // Reset all to inactive first
+        [typeAnimeBtn, typeMangaBtn, typeCharacterBtn].forEach(btn => {
             if (btn) {
-                btn.classList.remove('bg-neon-blue', 'text-black');
-                btn.classList.add('text-neon-blue', 'hover:bg-neon-blue/20');
+                btn.classList.add(...inactiveClass);
+                btn.classList.remove(...activeClass);
             }
         });
 
-        if (typeCharacterBtn) {
-            typeCharacterBtn.classList.remove('bg-neon-pink', 'text-black');
-            typeCharacterBtn.classList.add('text-neon-pink', 'hover:bg-neon-pink/20');
+        // Search Tab
+        if (searchType === 'ANIME') {
+            typeAnimeBtn.classList.add(...activeClass);
+            typeAnimeBtn.classList.remove(...inactiveClass);
+        } else if (searchType === 'MANGA') {
+            typeMangaBtn.classList.add(...activeClass);
+            typeMangaBtn.classList.remove(...inactiveClass);
+        } else if (searchType === 'CHARACTER') {
+            // Check if we want a distinct color for Chars or just Primary
+            // Let's use Primary for consistency in Clean setup
+            typeCharacterBtn.classList.add(...activeClass);
+            typeCharacterBtn.classList.remove(...inactiveClass);
         }
 
-        if (searchType === 'ANIME') {
-            typeAnimeBtn.classList.add('bg-neon-blue', 'text-black');
-            typeAnimeBtn.classList.remove('text-neon-blue', 'hover:bg-neon-blue/20');
-        } else if (searchType === 'MANGA') {
-            typeMangaBtn.classList.add('bg-neon-blue', 'text-black');
-            typeMangaBtn.classList.remove('text-neon-blue', 'hover:bg-neon-blue/20');
-        } else if (searchType === 'CHARACTER') {
-            typeCharacterBtn.classList.add('bg-neon-pink', 'text-black');
-            typeCharacterBtn.classList.remove('text-neon-pink', 'hover:bg-neon-pink/20');
-        }
 
         // Sync Tab Buttons
+        [typeAnimeSyncBtn, typeMangaSyncBtn].forEach(btn => {
+            if (btn) {
+                btn.classList.add(...inactiveClass);
+                btn.classList.remove(...activeClass);
+            }
+        });
+
         if (isAnime) {
-            typeAnimeSyncBtn.classList.add('bg-neon-blue', 'text-black');
-            typeAnimeSyncBtn.classList.remove('text-neon-blue', 'hover:bg-neon-blue/20');
-            typeMangaSyncBtn.classList.remove('bg-neon-blue', 'text-black');
-            typeMangaSyncBtn.classList.add('text-neon-blue', 'hover:bg-neon-blue/20');
+            typeAnimeSyncBtn.classList.add(...activeClass);
+            typeAnimeSyncBtn.classList.remove(...inactiveClass);
         } else {
-            typeMangaSyncBtn.classList.add('bg-neon-blue', 'text-black');
-            typeMangaSyncBtn.classList.remove('text-neon-blue', 'hover:bg-neon-blue/20');
-            typeAnimeSyncBtn.classList.remove('bg-neon-blue', 'text-black');
-            typeAnimeSyncBtn.classList.add('text-neon-blue', 'hover:bg-neon-blue/20');
+            typeMangaSyncBtn.classList.add(...activeClass);
+            typeMangaSyncBtn.classList.remove(...inactiveClass);
         }
 
         // Toggle Visibility
@@ -895,22 +935,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchNote = document.getElementById('search-instructions-note');
         if (searchNote) {
             if (searchType === 'CHARACTER') {
-                searchNote.innerHTML = '<i class="fas fa-info-circle mr-1"></i>Refresh the search when you switch between Character Name/Series Title.';
-                searchNote.className = 'search-note text-xs text-neon-pink mt-2 mb-4 italic';
+                searchNote.innerHTML = '<i class="fas fa-info-circle mr-1"></i>Switch between Character Name or Series Title search.';
+                searchNote.className = 'search-note text-xs text-slate-500 mt-2 mb-4';
             } else {
-                searchNote.innerHTML = '<i class="fas fa-info-circle mr-1"></i>Refresh the search when you switch between anime, manga, or characters.';
-                searchNote.className = 'search-note text-xs text-gray-400 mt-2 mb-4 italic';
+                searchNote.innerHTML = '<i class="fas fa-info-circle mr-1"></i>Search for your favorite anime or manga.';
+                searchNote.className = 'search-note text-xs text-slate-400 mt-2 mb-4';
             }
         }
 
-        // Toggle Scrollbar Style
-        if (searchType === 'CHARACTER') {
-            searchResultsContainer.classList.add('pink-scrollbar');
-            searchResultsContainer.classList.remove('custom-scrollbar');
-        } else {
-            searchResultsContainer.classList.remove('pink-scrollbar');
-            searchResultsContainer.classList.add('custom-scrollbar');
-        }
+        // Scrollbar logic is handled globally by CSS now mostly, but if we need a pink scrollbar specifically for Chars:
+        // In clean theme, we stick to the subtle slate scrollbar.
+        // So we can remove the pink-scrollbar toggle or just keep it minimal.
+        // Let's remove the neon-specific scrollbar toggle.
+        searchResultsContainer.classList.remove('pink-scrollbar', 'custom-scrollbar');
+        searchResultsContainer.classList.add('custom-scrollbar'); // Always clean slate scrollbar
     }
 
     // Helper to set active tab styling
@@ -920,12 +958,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tabs.forEach((t, i) => {
             if (t === tab) {
-                t.classList.add('border-b-2', 'border-neon-blue', 'bg-neon-blue/10', 'text-neon-blue');
-                t.classList.remove('text-gray-400');
+                // Active: Primary text, Border bottom primary
+                t.classList.add('border-b-2', 'border-primary', 'bg-primary/5', 'text-primary');
+                t.classList.remove('text-slate-500', 'dark:text-slate-400');
                 panels[i].classList.remove('hidden');
             } else {
-                t.classList.remove('border-b-2', 'border-neon-blue', 'bg-neon-blue/10', 'text-neon-blue');
-                t.classList.add('text-gray-400');
+                // Inactive: Slate text
+                t.classList.remove('border-b-2', 'border-primary', 'bg-primary/5', 'text-primary');
+                t.classList.add('text-slate-500', 'dark:text-slate-400');
                 panels[i].classList.add('hidden');
             }
         });
@@ -953,6 +993,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tiers.length < 7) {
                 const nextConfig = tierConfig[tiers.length];
                 tiers.push({ name: nextConfig.name, color: nextConfig.color, items: [] });
+                saveState();
                 renderTiers();
             }
         });
@@ -961,6 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tiers.length > 0) {
                 const removed = tiers.pop();
                 pool.push(...removed.items);
+                saveState();
                 renderTiers();
                 renderPool();
             }
@@ -999,6 +1041,13 @@ document.addEventListener('DOMContentLoaded', () => {
             clearAllResults();
             activeTab = 'search';
             setActiveTab(tabSearch);
+
+            // Restore search persistence
+            const savedQuery = localStorage.getItem('currentSearchQuery');
+            if (savedQuery) {
+                searchInput.value = savedQuery;
+                if (savedQuery.length > 2) performSearch();
+            }
         });
 
         tabSync.addEventListener('click', () => {
@@ -1017,8 +1066,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Real-time search
         searchInput.addEventListener('input', () => {
-            const query = searchInput.value.trim();
-            if (query.length > 2) {
+            const query = searchInput.value; // Don't trim immediately for typing feel, but save raw
+            localStorage.setItem('currentSearchQuery', query);
+
+            if (query.trim().length > 2) {
                 debouncedSearch();
             } else {
                 clearAllResults();
@@ -1037,49 +1088,64 @@ document.addEventListener('DOMContentLoaded', () => {
             searchType = 'ANIME';
             updateFormatFilterOptions('ANIME');
             updateTypeButtons();
+            performSearch(); // Trigger search on type switch
         });
 
         typeMangaBtn.addEventListener('click', () => {
             searchType = 'MANGA';
             updateFormatFilterOptions('MANGA');
             updateTypeButtons();
+            performSearch(); // Trigger search on type switch
         });
 
         typeCharacterBtn.addEventListener('click', () => {
             searchType = 'CHARACTER';
             updateFormatFilterOptions('CHARACTER');
             updateTypeButtons();
+            if (characterSearchMode === 'NAME') performSearch(); // Trigger if searching by name
         });
 
         // Character Search Mode Toggle
         modeCharacterNameBtn.addEventListener('click', () => {
             characterSearchMode = 'NAME';
-            modeCharacterNameBtn.classList.add('bg-neon-pink', 'text-black');
-            modeCharacterNameBtn.classList.remove('text-neon-pink', 'hover:bg-neon-pink/20');
-            modeSeriesTitleBtn.classList.remove('bg-neon-pink', 'text-black');
-            modeSeriesTitleBtn.classList.add('text-neon-pink', 'hover:bg-neon-pink/20');
+            // Active
+            modeCharacterNameBtn.classList.add('bg-primary', 'text-white');
+            modeCharacterNameBtn.classList.remove('bg-slate-100', 'text-slate-500', 'dark:bg-slate-800', 'hover:bg-slate-200');
+            // Inactive
+            modeSeriesTitleBtn.classList.remove('bg-primary', 'text-white');
+            modeSeriesTitleBtn.classList.add('bg-slate-100', 'text-slate-500', 'dark:bg-slate-800', 'hover:bg-slate-200');
+
             searchInput.placeholder = 'Search Character Name...';
+            // Trigger search if we have a query
+            if (searchInput.value.trim().length > 2) performSearch();
         });
 
         modeSeriesTitleBtn.addEventListener('click', () => {
             characterSearchMode = 'SERIES';
-            modeSeriesTitleBtn.classList.add('bg-neon-pink', 'text-black');
-            modeSeriesTitleBtn.classList.remove('text-neon-pink', 'hover:bg-neon-pink/20');
-            modeCharacterNameBtn.classList.remove('bg-neon-pink', 'text-black');
-            modeCharacterNameBtn.classList.add('text-neon-pink', 'hover:bg-neon-pink/20');
+            // Active
+            modeSeriesTitleBtn.classList.add('bg-primary', 'text-white');
+            modeSeriesTitleBtn.classList.remove('bg-slate-100', 'text-slate-500', 'dark:bg-slate-800', 'hover:bg-slate-200');
+            // Inactive
+            modeCharacterNameBtn.classList.remove('bg-primary', 'text-white');
+            modeCharacterNameBtn.classList.add('bg-slate-100', 'text-slate-500', 'dark:bg-slate-800', 'hover:bg-slate-200');
+
             searchInput.placeholder = 'Enter Series Title (e.g. Naruto)...';
+            // Trigger search if we have a query
+            if (searchInput.value.trim().length > 2) performSearch();
         });
 
         typeAnimeSyncBtn.addEventListener('click', () => {
             searchType = 'ANIME';
             updateFormatFilterOptions('ANIME');
             updateTypeButtons();
+            if (usernameInput.value.trim().length > 0) syncUserList(); // Auto-sync if user present
         });
 
         typeMangaSyncBtn.addEventListener('click', () => {
             searchType = 'MANGA';
             updateFormatFilterOptions('MANGA');
             updateTypeButtons();
+            if (usernameInput.value.trim().length > 0) syncUserList(); // Auto-sync if user present
         });
 
         syncBtn.addEventListener('click', syncUserList);
@@ -1134,9 +1200,27 @@ document.addEventListener('DOMContentLoaded', () => {
         filterFormatSeasons.addEventListener('change', applyFiltersAndSort);
 
         // Title filter inputs (local search)
-        filterTitleInput.addEventListener('input', applyFiltersAndSort);
-        filterTitleInputSync.addEventListener('input', applyFiltersAndSort);
-        filterTitleInputSeasons.addEventListener('input', applyFiltersAndSort);
+        if (filterTitleInput) filterTitleInput.addEventListener('input', applyFiltersAndSort);
+        if (filterTitleInputSync) filterTitleInputSync.addEventListener('input', applyFiltersAndSort);
+        if (filterTitleInputSeasons) filterTitleInputSeasons.addEventListener('input', applyFiltersAndSort);
+
+        // Enter Key Support
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+        usernameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') syncUserList();
+        });
+        if (seasonUsernameInput) {
+            seasonUsernameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleSeasonSearch();
+            });
+        }
+        if (yearInput) {
+            yearInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleSeasonSearch();
+            });
+        }
     }
 
     // Filtering & Sorting
@@ -1167,15 +1251,43 @@ document.addEventListener('DOMContentLoaded', () => {
             filterStatus.style.display = 'block';
         }
 
-        [filterFormat, filterFormatSync, filterFormatSeasons].forEach(select => {
-            select.innerHTML = '';
-            options.forEach(opt => {
+        // Populate Sync Sort Options to match
+        if (filterSortBySync) filterSortBySync.innerHTML = filterSortBy.innerHTML;
+
+        [filterFormat, filterFormatSync].forEach(select => {
+            if (select) {
+                select.innerHTML = '';
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.text;
+                    select.appendChild(option);
+                });
+            }
+        });
+    }
+
+    // Initialize Season Filters (Always Anime Defaults)
+    function initializeSeasonFilters() {
+        // Sort Options
+        if (filterSortBySeasons) {
+            filterSortBySeasons.innerHTML = `
+            <option value="popularity">Popularity</option>
+            <option value="averageScore">Score</option>
+            <option value="favourites">Favorites</option>
+            `;
+        }
+
+        // Format Options (Anime Only)
+        if (filterFormatSeasons) {
+            filterFormatSeasons.innerHTML = '';
+            ANIME_FORMATS.forEach(opt => {
                 const option = document.createElement('option');
                 option.value = opt.value;
                 option.textContent = opt.text;
-                select.appendChild(option);
+                filterFormatSeasons.appendChild(option);
             });
-        });
+        }
     }
 
     function applyFiltersAndSort() {
@@ -1187,19 +1299,19 @@ document.addEventListener('DOMContentLoaded', () => {
             sortDir = filterSortDirectionSync.value.toUpperCase();
             formatValue = filterFormatSync.value;
             statusValue = filterStatusSync.value;
-            titleFilter = filterTitleInputSync.value.toLowerCase().trim();
+            titleFilter = filterTitleInputSync ? filterTitleInputSync.value.toLowerCase().trim() : '';
         } else if (activeTab === 'seasons') {
             sortValue = filterSortBySeasons.value;
             sortDir = filterSortDirectionSeasons.value.toUpperCase();
             formatValue = filterFormatSeasons.value;
             statusValue = 'all';
-            titleFilter = filterTitleInputSeasons.value.toLowerCase().trim();
+            titleFilter = filterTitleInputSeasons ? filterTitleInputSeasons.value.toLowerCase().trim() : '';
         } else {
             sortValue = filterSortBy.value;
             sortDir = filterSortDirection.value.toUpperCase();
             formatValue = filterFormat.value;
             statusValue = filterStatus.value;
-            titleFilter = filterTitleInput.value.toLowerCase().trim();
+            titleFilter = filterTitleInput ? filterTitleInput.value.toLowerCase().trim() : '';
         }
 
         // Title filter
@@ -1477,13 +1589,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderSeriesSelectionList(results) {
         searchResultsContainer.innerHTML = '';
         if (!results || results.length === 0) {
-            searchResultsContainer.innerHTML = '<div class="col-span-full text-center text-gray-500">No series found</div>';
+            searchResultsContainer.innerHTML = '<div class="col-span-full text-center text-slate-400">No series found</div>';
             return;
         }
 
         // Add Feedback Text
         const feedback = document.createElement('div');
-        feedback.className = 'col-span-full text-center text-neon-pink text-xs mb-2 font-bold animate-pulse';
+        feedback.className = 'col-span-full text-center text-primary text-xs mb-2 font-bold';
         feedback.textContent = 'Select a series to view its characters:';
         searchResultsContainer.appendChild(feedback);
 
@@ -1491,19 +1603,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = media.title.english || media.title.romaji;
             const imgUrl = media.coverImage.extraLarge;
             const card = document.createElement('div');
-            card.className = 'search-result-card flex flex-col rounded overflow-hidden group border border-neon-pink/30 hover:border-neon-pink transition-colors';
+            card.className = 'search-result-card group'; // Use Clean CSS class
+
             card.innerHTML = `
-            <div class="relative w-full overflow-hidden">
-                <img src="${imgUrl}" class="w-full aspect-[2/3] object-cover group-hover:scale-110 transition-transform duration-500">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
-                    <button class="select-series-btn bg-neon-pink text-black font-bold px-3 py-1 text-[10px] uppercase hover:bg-white hover:text-neon-pink transition-colors shadow-[0_0_10px_#ff00ff]">
+            <div class="relative w-full aspect-[2/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <img src="${imgUrl}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button class="select-series-btn bg-primary text-white font-bold px-4 py-2 rounded-lg uppercase shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all text-xs">
                         <i class="fas fa-check mr-1"></i> SELECT
                     </button>
                 </div>
             </div>
-            <div class="p-2 flex flex-col flex-1 bg-black/40">
-                <div class="text-xs font-bold text-neon-pink truncate mb-1" title="${title}">${title}</div>
-                <div class="text-[10px] text-gray-400">${media.startDate.year || '?'} • ${media.format}</div>
+            <div class="p-3 bg-white dark:bg-slate-800">
+                <div class="text-xs font-bold text-slate-700 dark:text-slate-200 truncate mb-1" title="${title}">${title}</div>
+                <div class="text-[10px] text-slate-400">${media.startDate.year || '?'} • ${media.format}</div>
             </div>
         `;
 
@@ -1570,9 +1683,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add Back Button into the search container
             if (lastSeriesSearchResults && lastSeriesSearchResults.length > 0) {
                 const backBtnContainer = document.createElement('div');
-                backBtnContainer.className = 'col-span-full mb-2 flex justify-start';
+                // Added sticky positioning classes
+                backBtnContainer.className = 'col-span-full mb-2 flex justify-start sticky top-0 z-10 bg-white dark:bg-slate-900 py-2 border-b border-slate-100 dark:border-slate-800';
                 backBtnContainer.innerHTML = `
-                    <button id="back-to-series-btn" class="text-neon-pink hover:text-white flex items-center gap-2 text-xs font-bold uppercase transition-colors">
+                    <button id="back-to-series-btn" class="text-slate-500 hover:text-primary flex items-center gap-2 text-xs font-bold uppercase transition-colors">
                         <i class="fas fa-arrow-left"></i> Back to Series Results
                     </button>
                 `;
@@ -1614,6 +1728,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (layoutToggleBtn) {
         layoutToggleBtn.addEventListener('click', () => {
             toggleLayoutView(searchResultsContainer, layoutToggleBtn);
+        });
+    }
+
+    // Dark Mode Toggle Listener
+    if (darkModeToggleBtn) {
+        darkModeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('aniTierList_darkMode', isDark);
+            darkModeToggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
         });
     }
 
@@ -1808,5 +1932,11 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', exportTierListAsPNG);
     }
 
+    // Initialize Search from Persistence
+    const savedSearchQuery = localStorage.getItem('currentSearchQuery');
+    if (savedSearchQuery) {
+        searchInput.value = savedSearchQuery;
+        if (savedSearchQuery.trim().length > 2) performSearch();
+    }
 
 });

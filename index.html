@@ -4,32 +4,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AniTierlist - Ultimate Ranker</title>
+    <title>AniTierlist - Clean Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fonts: Inter & Poppins -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&family=Jua&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        'base-bg': '#17212b',
-                        'neon-blue': '#00dfff',
-                        'neon-pink': '#FF00FF',
-                        'neon-green': '#00FF00',
-                        'dark-panel': '#1e293b',
+                        'page-bg': '#f8fafc',       // Slate 50
+                        'card-bg': '#ffffff',       // White
+                        'primary': '#6366f1',       // Indigo 500
+                        'primary-hover': '#4f46e5', // Indigo 600
+                        'secondary': '#64748b',     // Slate 500
+                        'accent': '#0ea5e9',        // Sky 500
+
+                        // Dark Mode Colors
+                        'dark-bg': '#0f172a',       // Slate 900
+                        'dark-card': '#1e293b',     // Slate 800
                     },
                     fontFamily: {
-                        'orbitron': ['"Orbitron"', 'sans-serif'],
-                        'mono': ['"JetBrains Mono"', 'monospace'],
-                        'jua': ['"Jua"', 'sans-serif'],
+                        'sans': ['"Inter"', 'sans-serif'],
+                        'display': ['"Poppins"', 'sans-serif'],
                     },
                     boxShadow: {
-                        'neon': '0 0 5px #00dfff, 0 0 10px #00dfff',
-                        'neon-hover': '0 0 10px #00dfff, 0 0 20px #00dfff',
+                        'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+                        'hover': '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)',
                     }
                 }
             }
@@ -37,303 +43,332 @@
     </script>
 </head>
 
-<body class="bg-base-bg text-white font-mono min-h-screen overflow-x-hidden relative">
-    <div class="scanlines fixed inset-0 pointer-events-none z-50"></div>
-    <div class="bg-grid fixed inset-0 pointer-events-none z-0 opacity-10"></div>
+<body
+    class="bg-page-bg dark:bg-dark-bg text-slate-800 dark:text-slate-200 font-sans min-h-screen transition-colors duration-300">
 
     <!-- Settings Modal -->
     <div id="settings-modal"
-        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
         <div
-            class="bg-base-bg border-2 border-neon-pink p-3 sm:p-6 rounded-lg shadow-[0_0_20px_rgba(255,0,255,0.5)] w-[95%] sm:max-w-md max-h-[90vh] sm:max-h-[80vh] overflow-hidden flex flex-col">
+            class="bg-white dark:bg-dark-card border border-slate-100 dark:border-slate-700 p-6 rounded-2xl shadow-xl w-[95%] sm:max-w-md max-h-[90vh] flex flex-col transition-all">
 
-            <div class="modal-header flex justify-between items-center mb-6 border-b border-neon-pink/30 pb-4 shrink-0">
-                <h2 class="modal-title text-2xl font-orbitron text-neon-pink">
-                    <i class="fas fa-cog mr-2"></i>TIER_CONFIG
+            <div
+                class="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-slate-700 pb-4 shrink-0">
+                <h2 class="text-xl font-display font-bold text-slate-800 dark:text-white">
+                    <i class="fas fa-sliders-h mr-2 text-primary"></i>Tier Config
                 </h2>
-                <button id="close-settings-btn" class="text-gray-400 hover:text-white text-2xl transition-colors">
-                    <i class="fas fa-times"></i>
+                <button id="close-settings-btn"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
 
-            <div class="modal-body flex-1 overflow-y-auto pink-scrollbar pr-2">
-                <div id="tierSettingsList" class="settings-list flex flex-col gap-3">
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                <div id="tierSettingsList" class="flex flex-col gap-3">
                     <!-- Dynamic Rows Will Be Injected Here -->
                 </div>
 
-                <div class="tier-actions mt-4">
-                    <button id="addTierConfigBtn" class="action-btn-secondary">
+                <div class="mt-4">
+                    <button id="addTierConfigBtn"
+                        class="w-full py-2 border border-dashed border-slate-300 dark:border-slate-600 text-slate-500 hover:text-primary hover:border-primary hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all text-sm font-medium">
                         <i class="fas fa-plus mr-2"></i> Add New Tier
                     </button>
                 </div>
             </div>
 
-            <div class="modal-footer flex gap-4 mt-6 pt-4 border-t border-neon-pink/30 shrink-0">
-                <button id="resetTiersBtn" class="action-btn-tertiary flex-1">
-                    <i class="fas fa-undo mr-1"></i> Reset
+            <div class="flex gap-3 mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 shrink-0">
+                <button id="resetTiersBtn"
+                    class="flex-1 px-4 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors">
+                    Reset
                 </button>
-                <button id="saveSettingsBtn" class="action-btn-primary flex-1">
-                    <i class="fas fa-save mr-1"></i> Save Changes
+                <button id="saveSettingsBtn"
+                    class="flex-1 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+                    Save Changes
                 </button>
             </div>
         </div>
     </div>
 
-    <div class="container mx-auto p-4 relative z-10 max-w-full flex flex-col gap-6">
-        <header
-            class="mb-4 border-b-2 border-neon-blue pb-4 flex flex-col sm:flex-row justify-between items-center gap-4 bg-base-bg/80 backdrop-blur-sm sticky top-0 z-40 px-2">
-            <h1
-                class="text-3xl sm:text-4xl font-orbitron font-bold text-neon-blue drop-shadow-[0_0_5px_rgba(0,223,255,0.8)]">
-                <i class="fas fa-layer-group mr-2"></i>ANI_TIER_SYS
-            </h1>
-            <div class="flex gap-4 flex-wrap justify-center">
+    <!-- Header (Relative Positioning = Scrolls away with page) -->
+    <header
+        class="relative z-50 w-full bg-white dark:bg-dark-card border-b border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-300">
+        <div
+            class="container mx-auto max-w-7xl px-4 py-3 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-primary/10 p-2 rounded-lg text-primary">
+                    <i class="fas fa-layer-group text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-display font-bold text-slate-800 dark:text-white tracking-tight">AniTierlist
+                </h1>
+            </div>
+
+            <div class="flex gap-2 flex-wrap justify-center">
+                <button id="darkModeToggle"
+                    class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-600 dark:text-slate-200 transition-all text-sm font-medium">
+                    <i class="fas fa-moon"></i>
+                </button>
                 <button id="settings-btn"
-                    class="border border-neon-pink text-neon-pink px-4 py-2 hover:bg-neon-pink hover:text-black transition-all duration-300 font-bold uppercase tracking-wider text-sm shadow-[0_0_5px_#FF00FF]">
-                    <i class="fas fa-cog mr-2"></i>TIER_SETTINGS
+                    class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-600 dark:text-slate-200 transition-all text-sm font-medium">
+                    <i class="fas fa-cog mr-2"></i>Settings
                 </button>
                 <button id="save-btn"
-                    class="border border-neon-blue text-neon-blue px-4 py-2 hover:bg-neon-blue hover:text-black transition-all duration-300 font-bold uppercase tracking-wider text-sm shadow-[0_0_5px_#00dfff]">
-                    <i class="fas fa-save mr-2"></i>SAVE
+                    class="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-primary font-medium hover:bg-slate-50 transition-all text-sm shadow-sm">
+                    <i class="fas fa-save mr-2"></i>Save
                 </button>
                 <button id="export-btn"
-                    class="border border-neon-green text-neon-green px-4 py-2 hover:bg-neon-green hover:text-black transition-all duration-300 font-bold uppercase tracking-wider text-sm shadow-[0_0_5px_#00FF00]">
-                    <i class="fas fa-file-export mr-2"></i>EXPORT_IMAGE
+                    class="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium transition-all text-sm shadow-lg shadow-primary/20">
+                    <i class="fas fa-download mr-2"></i>Export
                 </button>
-            </div>
-        </header>
-
-        <!-- Top Control Panel -->
-        <div id="top-control-panel" class="flex flex-col gap-6 w-full">
-            <!-- Search/Sync/Seasons Panel -->
-            <div id="search-sync-area" class="border border-neon-blue bg-base-bg/90 p-4 shadow-neon relative w-full">
-                <div class="flex border-b border-neon-blue/30 mb-4">
-                    <button id="tab-search"
-                        class="flex-1 py-2 text-neon-blue font-bold border-b-2 border-neon-blue bg-neon-blue/10 text-sm">
-                        <i class="fas fa-search mr-1"></i>SEARCH
-                    </button>
-                    <button id="tab-sync"
-                        class="flex-1 py-2 text-gray-400 font-bold hover:text-neon-blue transition-colors text-sm">
-                        <i class="fas fa-sync mr-1"></i>SYNC
-                    </button>
-                    <button id="tab-seasons"
-                        class="flex-1 py-2 text-gray-400 font-bold hover:text-neon-blue transition-colors text-sm">
-                        <i class="fas fa-calendar-alt mr-1"></i>SEASONS
-                    </button>
-                </div>
-
-                <div id="panel-search" class="block">
-                    <div class="flex gap-2 mb-4">
-                        <input id="search-input" type="text" placeholder="Search..."
-                            class="flex-1 bg-black/50 border border-neon-blue/50 text-white p-2 focus:outline-none focus:border-neon-blue font-mono text-sm">
-                        <button id="search-btn"
-                            class="bg-neon-blue text-black px-4 font-bold hover:bg-white transition-colors">
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
-                    <p id="search-instructions-note" class="search-note">
-                        Refresh the search when you switch between anime, manga, or characters.
-                    </p>
-                    <div class="flex gap-2 mb-4">
-                        <button id="type-anime"
-                            class="flex-1 text-xs border border-neon-blue bg-neon-blue text-black font-bold py-1">ANIME</button>
-                        <button id="type-manga"
-                            class="flex-1 text-xs border border-neon-blue text-neon-blue font-bold py-1 hover:bg-neon-blue/20">MANGA</button>
-                        <button id="type-character"
-                            class="flex-1 text-xs border border-neon-pink text-neon-pink font-bold py-1 hover:bg-neon-pink/20">CHARACTERS</button>
-                    </div>
-
-                    <div id="character-search-mode-toggle" class="flex gap-2 mb-4 hidden">
-                        <button id="mode-character-name"
-                            class="flex-1 text-xs border border-neon-pink bg-neon-pink text-black font-bold py-1">Character
-                            Name</button>
-                        <button id="mode-series-title"
-                            class="flex-1 text-xs border border-neon-pink text-neon-pink font-bold py-1 hover:bg-neon-pink/20">Series
-                            Title</button>
-                    </div>
-
-                    <div id="global-filter-controls" style="display: none;">
-                        <input type="text" id="filter-title-input" class="filter-title-input"
-                            placeholder="Filter by title...">
-                        <div class="sort-controls-group">
-                            <select id="filter-sort-by">
-                                <option value="title">Title</option>
-                                <option value="popularity">Popularity</option>
-                                <option value="averageScore">Score</option>
-                                <option value="trending">Trending</option>
-                                <option value="id">Date Added</option>
-                                <option value="startDate">Release Date</option>
-                            </select>
-                            <select id="filter-sort-direction">
-                                <option value="ASC">ASC</option>
-                                <option value="DESC">DESC</option>
-                            </select>
-                        </div>
-                        <select id="filter-format"></select>
-                        <select id="filter-status" style="display: none;">
-                            <option value="all">All Status</option>
-                            <option value="CURRENT">Watching</option>
-                            <option value="COMPLETED">Completed</option>
-                            <option value="PAUSED">Paused</option>
-                            <option value="DROPPED">Dropped</option>
-                            <option value="PLANNING">Planning</option>
-                        </select>
-                        <button id="layout-toggle-btn" class="layout-toggle-btn" title="Toggle Layout">
-                            <i class="fas fa-th"></i>
-                        </button>
-                    </div>
-
-                    <div id="search-results"
-                        class="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar">
-                        <div class="col-span-full text-center text-gray-500 py-4">Ready to search...</div>
-                    </div>
-                </div>
-
-                <div id="panel-sync" class="hidden">
-                    <div class="flex gap-2 mb-4">
-                        <input id="username-input" type="text" placeholder="AniList Username"
-                            class="flex-1 bg-black/50 border border-neon-blue/50 text-white p-2 focus:outline-none focus:border-neon-blue font-mono text-sm">
-                        <button id="sync-btn"
-                            class="bg-neon-blue text-black px-4 font-bold hover:bg-white transition-colors">
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
-                    <p class="search-note">
-                        Refresh the search when you switch between anime, manga, or characters.
-                    </p>
-                    <div class="flex gap-2 mb-4">
-                        <button id="type-anime-sync"
-                            class="flex-1 text-xs border border-neon-blue bg-neon-blue text-black font-bold py-1">ANIME</button>
-                        <button id="type-manga-sync"
-                            class="flex-1 text-xs border border-neon-blue text-neon-blue font-bold py-1 hover:bg-neon-blue/20">MANGA</button>
-                    </div>
-                    <div id="sync-status" class="text-xs text-center text-gray-400 font-mono mb-4">Waiting for input...
-                    </div>
-
-                    <div id="global-filter-controls-sync" style="display: none;">
-                        <input type="text" id="filter-title-input-sync" class="filter-title-input"
-                            placeholder="Filter by title...">
-                        <div class="sort-controls-group">
-                            <select id="filter-sort-by-sync">
-                                <option value="title">Title</option>
-                                <option value="popularity">Popularity</option>
-                                <option value="averageScore">Score</option>
-                                <option value="trending">Trending</option>
-                                <option value="id">Date Added</option>
-                                <option value="startDate">Release Date</option>
-                            </select>
-                            <select id="filter-sort-direction-sync">
-                                <option value="ASC">ASC</option>
-                                <option value="DESC">DESC</option>
-                            </select>
-                        </div>
-                        <select id="filter-format-sync"></select>
-                        <select id="filter-status-sync">
-                            <option value="all">All Status</option>
-                            <option value="CURRENT">Watching</option>
-                            <option value="COMPLETED">Completed</option>
-                            <option value="PAUSED">Paused</option>
-                            <option value="DROPPED">Dropped</option>
-                            <option value="PLANNING">Planning</option>
-                        </select>
-                        <button id="layout-toggle-btn-sync" class="layout-toggle-btn" title="Toggle Layout">
-                            <i class="fas fa-th"></i>
-                        </button>
-                    </div>
-
-                    <div id="sync-results"
-                        class="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar"></div>
-                </div>
-
-                <div id="panel-seasons" class="hidden">
-                    <div class="seasons-instructions">
-                        <ul>
-                            <li>Choose the season, then enter the year to begin.</li>
-                            <li>If you have an account, you can type it to use your library.</li>
-                        </ul>
-                    </div>
-                    <div class="grid grid-cols-4 gap-2 mb-2">
-                        <select id="season-select"
-                            class="bg-black/50 border border-neon-blue/50 text-white p-2 focus:outline-none focus:border-neon-blue font-mono text-sm">
-                            <option value="WINTER">Winter</option>
-                            <option value="SPRING">Spring</option>
-                            <option value="SUMMER">Summer</option>
-                            <option value="FALL">Fall</option>
-                        </select>
-                        <input id="year-input" type="number" placeholder="Year"
-                            class="bg-black/50 border border-neon-blue/50 text-white p-2 focus:outline-none focus:border-neon-blue font-mono text-sm">
-                        <input id="season-username-input" type="text" placeholder="Username (optional)"
-                            class="bg-black/50 border border-neon-blue/50 text-white p-2 focus:outline-none focus:border-neon-blue font-mono text-sm">
-                        <button id="season-search-btn"
-                            class="bg-neon-blue text-black px-4 font-bold hover:bg-white transition-colors text-sm">
-                            <i class="fas fa-search mr-1"></i>Search
-                        </button>
-                    </div>
-                    <div id="season-status" class="text-xs text-center text-gray-400 font-mono mb-4">Select season and
-                        year...</div>
-
-                    <div id="global-filter-controls-seasons" style="display: none;">
-                        <input type="text" id="filter-title-input-seasons" class="filter-title-input"
-                            placeholder="Filter by title...">
-                        <div class="sort-controls-group">
-                            <select id="filter-sort-by-seasons">
-                                <option value="title">Title</option>
-                                <option value="popularity">Popularity</option>
-                                <option value="averageScore">Score</option>
-                                <option value="trending">Trending</option>
-                                <option value="id">Date Added</option>
-                                <option value="startDate">Release Date</option>
-                            </select>
-                            <select id="filter-sort-direction-seasons">
-                                <option value="ASC">ASC</option>
-                                <option value="DESC">DESC</option>
-                            </select>
-                        </div>
-                        <select id="filter-format-seasons"></select>
-                        <button id="layout-toggle-btn-seasons" class="layout-toggle-btn" title="Toggle Layout">
-                            <i class="fas fa-th"></i>
-                        </button>
-                    </div>
-
-                    <div id="season-results"
-                        class="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar"></div>
-                </div>
-            </div>
-
-            <!-- Unranked Pool Panel -->
-            <div id="unranked-pool-panel" class="border border-neon-blue bg-base-bg/90 p-4 shadow-neon relative w-full">
-                <div class="flex justify-between items-center mb-4 border-b border-neon-blue/30 pb-2">
-                    <h2 class="text-xl font-orbitron text-neon-blue">
-                        <i class="fas fa-box-open mr-2"></i>UNRANKED_POOL
-                    </h2>
-                    <button id="clear-unranked-pool-btn"
-                        class="text-xs border border-red-500 text-red-400 px-2 py-1 hover:bg-red-500 hover:text-white transition-all font-bold uppercase rounded">
-                        <i class="fas fa-trash-alt mr-1"></i>Clear Unranked Pool
-                    </button>
-                </div>
-                <div id="pool-items"
-                    class="min-h-[150px] max-h-[300px] overflow-y-auto custom-scrollbar flex flex-wrap gap-2 p-2 bg-black/20 border border-dashed border-gray-700">
-                    <div class="w-full text-center text-gray-500 py-8">Pool Empty</div>
-                </div>
             </div>
         </div>
+    </header>
 
-        <!-- Tier List Area -->
-        <div id="tier-list-container-wrapper" class="flex-grow flex flex-col gap-4">
-            <div id="tier-container" class="flex flex-col gap-4"></div>
-            <div class="flex justify-center gap-4 mt-4 flex-wrap">
-                <button id="add-tier-btn"
-                    class="bg-blue-600/30 border border-blue-500 text-blue-300 px-6 py-2 hover:bg-blue-500 hover:text-white transition-all font-bold uppercase rounded-full">
-                    <i class="fas fa-plus mr-2"></i>Add Tier
-                </button>
-                <button id="rem-tier-btn"
-                    class="bg-red-600/30 border border-red-500 text-red-300 px-6 py-2 hover:bg-red-500 hover:text-white transition-all font-bold uppercase rounded-full">
-                    <i class="fas fa-minus mr-2"></i>Rem Tier
-                </button>
-                <button id="clear-ranked-tiers-btn"
-                    class="bg-red-900/30 border border-red-500 text-red-400 px-6 py-2 hover:bg-red-500 hover:text-white transition-all font-bold uppercase rounded-full">
-                    <i class="fas fa-trash mr-2"></i>Clear Ranked Tiers
-                </button>
+    <!-- Main Content -->
+    <div class="container mx-auto p-4 sm:p-6 relative z-10 max-w-7xl flex flex-col gap-8">
+
+        <!-- Main Control Panel -->
+        <div class="flex flex-col lg:flex-row gap-6 items-start">
+
+            <!-- Left Side: Search & Pool -->
+            <div class="w-full lg:w-1/3 flex flex-col gap-6">
+
+                <!-- Search Tabs -->
+                <div
+                    class="bg-card-bg dark:bg-dark-card rounded-2xl shadow-soft border border-slate-100 dark:border-slate-700 overflow-hidden">
+                    <div class="flex border-b border-slate-100 dark:border-slate-700">
+                        <button id="tab-search"
+                            class="flex-1 py-3 text-sm font-medium text-primary border-b-2 border-primary bg-primary/5">Search</button>
+                        <button id="tab-sync"
+                            class="flex-1 py-3 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Sync</button>
+                        <button id="tab-seasons"
+                            class="flex-1 py-3 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Seasons</button>
+                    </div>
+
+                    <div class="p-5">
+                        <!-- Panel: Search -->
+                        <div id="panel-search" class="block space-y-4">
+                            <div
+                                class="flex gap-2 bg-slate-50 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <input id="search-input" type="text" placeholder="Search title..."
+                                    class="flex-1 bg-transparent px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none">
+                                <button id="search-btn"
+                                    class="bg-white dark:bg-slate-800 text-primary px-3 rounded-lg shadow-sm hover:text-primary-hover transition-colors">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <button id="type-anime"
+                                    class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-primary text-white shadow-sm transition-all">ANIME</button>
+                                <button id="type-manga"
+                                    class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 transition-all">MANGA</button>
+                                <button id="type-character"
+                                    class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 transition-all">CHARS</button>
+                            </div>
+
+                            <div id="character-search-mode-toggle" class="flex gap-2 hidden">
+                                <button id="mode-character-name"
+                                    class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-accent text-white shadow-sm transition-all">By
+                                    Name</button>
+                                <button id="mode-series-title"
+                                    class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 transition-all">By
+                                    Series</button>
+                            </div>
+
+                            <div id="global-filter-controls"
+                                class="hidden flex-col gap-3 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl">
+                                <div class="flex gap-2">
+                                    <select id="filter-sort-by"
+                                        class="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2"></select>
+                                    <select id="filter-sort-direction"
+                                        class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2">
+                                        <option value="DESC">Desc</option>
+                                        <option value="ASC">Asc</option>
+                                    </select>
+                                    <button id="layout-toggle-btn"
+                                        class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 px-2 rounded-md hover:text-primary">
+                                        <i class="fas fa-th"></i>
+                                    </button>
+                                </div>
+                                <select id="filter-format"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2"></select>
+                                <select id="filter-status"
+                                    class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2">
+                                    <option value="all">All Status</option>
+                                    <option value="CURRENT">Watching</option>
+                                    <option value="COMPLETED">Completed</option>
+                                    <option value="PLANNING">Planning</option>
+                                </select>
+                            </div>
+
+                            <div id="search-results"
+                                class="grid grid-cols-3 gap-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                                <div class="col-span-full text-center py-8 text-slate-400 text-xs">Start searching...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel: Sync -->
+                        <div id="panel-sync" class="hidden space-y-4">
+                            <div
+                                class="flex gap-2 bg-slate-50 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <input id="username-input" type="text" placeholder="AniList Username"
+                                    class="flex-1 bg-transparent px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none">
+                                <button id="sync-btn"
+                                    class="bg-white dark:bg-slate-800 text-primary px-3 rounded-lg shadow-sm hover:text-primary-hover transition-colors">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <button id="type-anime-sync"
+                                    class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-primary text-white">ANIME</button>
+                                <button id="type-manga-sync"
+                                    class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">MANGA</button>
+                            </div>
+
+                            <div id="sync-status" class="text-xs text-center text-slate-400">Ready to sync</div>
+
+                            <div id="global-filter-controls-sync"
+                                class="hidden flex-col gap-3 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl">
+                                <!-- Filter controls -->
+                                <div class="flex flex-col gap-2">
+                                    <select id="filter-sort-by-sync"
+                                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-md py-1.5 px-2"></select>
+                                    <div class="flex gap-2">
+                                        <select id="filter-sort-direction-sync"
+                                            class="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-md py-1.5 px-2">
+                                            <option value="DESC">Desc</option>
+                                            <option value="ASC">Asc</option>
+                                        </select>
+                                        <button id="layout-toggle-btn-sync"
+                                            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 px-2 rounded-md hover:text-primary">
+                                            <i class="fas fa-th"></i>
+                                        </button>
+                                    </div>
+                                    <select id="filter-format-sync"
+                                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2"></select>
+                                    <select id="filter-status-sync"
+                                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2">
+                                        <option value="all">All Status</option>
+                                        <option value="CURRENT">Watching</option>
+                                        <option value="COMPLETED">Completed</option>
+                                        <option value="PLANNING">Planning</option>
+                                    </select>
+                                    <input id="filter-title-input-sync" type="text" placeholder="Filter by title..."
+                                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2">
+                                </div>
+                            </div>
+
+                            <div id="sync-results"
+                                class="grid grid-cols-3 gap-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                            </div>
+                        </div>
+
+                        <!-- Panel: Seasons -->
+                        <div id="panel-seasons" class="hidden space-y-4">
+                            <div class="grid grid-cols-2 gap-2">
+                                <select id="season-select"
+                                    class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-lg p-2">
+                                    <option value="WINTER">Winter</option>
+                                    <option value="SPRING">Spring</option>
+                                    <option value="SUMMER">Summer</option>
+                                    <option value="FALL">Fall</option>
+                                </select>
+                                <input id="year-input" type="number" placeholder="Year"
+                                    class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-lg p-2">
+                            </div>
+                            <div class="flex gap-2">
+                                <input id="season-username-input" type="text" placeholder="User Filter (Optional)"
+                                    class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-lg p-2">
+                                <button id="season-search-btn"
+                                    class="bg-primary text-white px-3 rounded-lg text-xs font-bold shadow-sm">Go</button>
+                            </div>
+
+                            <div id="season-status" class="text-xs text-center text-slate-400">Select season & year
+                            </div>
+
+                            <div id="global-filter-controls-seasons"
+                                class="hidden flex-col gap-3 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl">
+                                <!-- Filter controls -->
+                                <div class="flex flex-col gap-2">
+                                    <select id="filter-sort-by-seasons"
+                                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-md py-1.5 px-2">
+                                        <option value="popularity">Popularity</option>
+                                        <option value="averageScore">Score</option>
+                                        <option value="favourites">Favorites</option>
+                                    </select>
+                                    <div class="flex gap-2">
+                                        <select id="filter-sort-direction-seasons"
+                                            class="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-md py-1.5 px-2">
+                                            <option value="DESC">Desc</option>
+                                            <option value="ASC">Asc</option>
+                                        </select>
+                                        <button id="layout-toggle-btn-seasons"
+                                            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 px-2 rounded-md hover:text-primary">
+                                            <i class="fas fa-th"></i>
+                                        </button>
+                                    </div>
+                                    <select id="filter-format-seasons"
+                                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2"></select>
+                                    <input id="filter-title-input-seasons" type="text" placeholder="Filter by title..."
+                                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2">
+                                </div>
+                            </div>
+
+                            <div id="season-results"
+                                class="grid grid-cols-3 gap-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Right Side: Tier List & Pool -->
+            <div class="w-full lg:w-2/3 flex flex-col gap-6">
+                <div id="tier-list-container-wrapper"
+                    class="bg-card-bg dark:bg-dark-card rounded-2xl shadow-soft border border-slate-100 dark:border-slate-700 p-6 min-h-[600px]">
+
+                    <div id="tier-container" class="flex flex-col gap-3 mb-6">
+                        <!-- Tiers injected here -->
+                    </div>
+
+                    <div class="flex justify-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
+                        <button id="add-tier-btn"
+                            class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <i class="fas fa-plus mr-1"></i> Add Tier
+                        </button>
+                        <button id="rem-tier-btn"
+                            class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <i class="fas fa-minus mr-1"></i> Rem Tier
+                        </button>
+                        <button id="clear-ranked-tiers-btn"
+                            class="px-4 py-2 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-full text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors">
+                            <i class="fas fa-trash mr-1"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Unranked Pool (STICKY + RESIZED ITEMS) -->
+                <!-- Added 'sticky bottom-4 z-30' for sticky positioning -->
+                <div
+                    class="sticky bottom-4 z-30 bg-card-bg dark:bg-dark-card rounded-2xl shadow-soft border border-slate-100 dark:border-slate-700 p-5 flex flex-col gap-4">
+                    <div class="flex justify-between items-center">
+                        <h2
+                            class="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-box-open text-primary"></i> Unranked Pool
+                        </h2>
+                        <button id="clear-unranked-pool-btn"
+                            class="text-xs text-rose-400 hover:text-rose-600 font-medium">Clear</button>
+                    </div>
+                    <!-- Changed gap-2 to gap-1 for tighter packing -->
+                    <div id="pool-items"
+                        class="min-h-[120px] max-h-[250px] overflow-y-auto custom-scrollbar flex flex-wrap gap-1 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+                        <div class="w-full text-center text-slate-400 text-xs py-8">Drag items here or import them</div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
