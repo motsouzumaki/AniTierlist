@@ -656,6 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Touch Handling Functions
+    // Touch Handling Functions
     function handleTouchStart(e, item, source) {
         if (e.touches.length > 1) return; // Ignore multi-touch
         e.preventDefault();
@@ -668,6 +669,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Clone the element that was touched
         const clone = originalEl.cloneNode(true);
+
+        // Remove heavy children (tooltips) from the clone
+        const tooltip = clone.querySelector('.absolute');
+        if (tooltip) tooltip.remove();
+
         currentTouchedItem = clone; // We drag the clone
 
         const touch = e.touches[0];
@@ -687,9 +693,9 @@ document.addEventListener('DOMContentLoaded', () => {
         clone.style.margin = '0';
         clone.style.pointerEvents = 'none'; // Crucial so we can read elementFromPoint below it
 
-        // Add visual flair
+        // Add visual flair - NO SCALE for performance
         clone.classList.add('mobile-dragging');
-        clone.style.transform = `translate3d(0, -70px, 0) scale(1.15)`; // Initial pop
+        clone.style.transform = `translate3d(0, -70px, 0)`;
 
         // Append to body so it sits above EVERYTHING (escape overflow:hidden contexts)
         document.body.appendChild(clone);
@@ -705,8 +711,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const dx = touch.clientX - initialX;
         const dy = touch.clientY - initialY;
 
-        // Move the clone
-        currentTouchedItem.style.transform = `translate3d(${dx}px, ${dy - 70}px, 0) scale(1.15)`;
+        // Move the clone directly - simple and reliable
+        // removed scale(1.15) for performance
+        currentTouchedItem.style.transform = `translate3d(${dx}px, ${dy - 70}px, 0)`;
     }
 
     function handleTouchEnd(e) {

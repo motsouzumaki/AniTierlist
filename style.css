@@ -124,6 +124,8 @@
     transition: transform 0.2s;
     background: #cbd5e1;
     /* Placeholder color */
+    touch-action: none;
+    /* Prevent native scrolling when touching items */
 }
 
 .album:hover {
@@ -213,11 +215,19 @@
 
 /* Mobile Dragging Clone */
 .mobile-dragging {
-    opacity: 0.9 !important;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    opacity: 0.4 !important;
+    /* FAST MODE: High transparency */
+    box-shadow: none !important;
+    /* FAST MODE: No shadow calculation */
     z-index: 9999 !important;
     pointer-events: none;
     border-radius: 8px;
+    will-change: transform, left, top;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    /* Force GPU acceleration */
+    transition: none !important;
+    /* CRITICAL: Prevent lag/interpolation during drag */
 }
 
 /* Settings Modal Rows */
