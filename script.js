@@ -184,6 +184,7 @@ const globalFilterControlsSeasons = document.getElementById('global-filter-contr
 const filterSortBySeasons = document.getElementById('filter-sort-by-seasons');
 const filterSortDirectionSeasons = document.getElementById('filter-sort-direction-seasons');
 const filterFormatSeasons = document.getElementById('filter-format-seasons');
+const filterStatusSeasons = document.getElementById('filter-status-seasons');
 
 // Title Filter Inputs
 const filterTitleInput = document.getElementById('filter-title-input');
@@ -305,6 +306,32 @@ document.addEventListener('DOMContentLoaded', () => {
         tooltip.textContent = item.title;
         wrapper.appendChild(img);
         wrapper.appendChild(tooltip);
+
+        // Add Delete Button ONLY for Pool items
+        if (source === 'pool') {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'absolute top-1 right-1 bg-black/50 hover:bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-all z-10 cursor-pointer shadow-sm';
+            deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+            deleteBtn.title = "Remove from pool";
+
+            deleteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent drag start or clickthru
+
+                // Remove from pool array
+                pool = pool.filter(i => i.id !== item.id);
+                saveState();
+
+                // Animate removal
+                wrapper.style.transform = 'scale(0.5)';
+                wrapper.style.opacity = '0';
+                setTimeout(() => {
+                    renderPool();
+                }, 200);
+            });
+            wrapper.appendChild(deleteBtn);
+        }
+
         img.addEventListener('dragstart', () => {
             draggedItem = item;
             draggedFrom = source;
@@ -581,12 +608,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusCallback(`Fetching page ${page}...`);
             }
 
+            const variables = { seasonYear: year, page: page };
+            if (season) {
+                variables.season = season;
+            }
+
             const response = await fetch(ANILIST_API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify({
                     query: query,
-                    variables: { season: season, seasonYear: year, page: page }
+                    variables: variables
                 })
             });
 
@@ -1264,6 +1296,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filterSortBySeasons.addEventListener('change', applyFiltersAndSort);
         filterSortDirectionSeasons.addEventListener('change', applyFiltersAndSort);
         filterFormatSeasons.addEventListener('change', applyFiltersAndSort);
+        filterStatusSeasons.addEventListener('change', applyFiltersAndSort);
 
         // Title filter inputs (local search)
         if (filterTitleInput) filterTitleInput.addEventListener('input', applyFiltersAndSort);
@@ -1335,12 +1368,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize Season Filters (Always Anime Defaults)
     function initializeSeasonFilters() {
-        // Sort Options
+        // Sort Options - Match Main Search
         if (filterSortBySeasons) {
             filterSortBySeasons.innerHTML = `
+            <option value="title">Title</option>
             <option value="popularity">Popularity</option>
             <option value="averageScore">Score</option>
-            <option value="favourites">Favorites</option>
+            <option value="trending">Trending</option>
+            <option value="id">Date Added</option>
+            <option value="startDate">Release Date</option>
             `;
         }
 
@@ -1370,7 +1406,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sortValue = filterSortBySeasons.value;
             sortDir = filterSortDirectionSeasons.value.toUpperCase();
             formatValue = filterFormatSeasons.value;
-            statusValue = 'all';
+            statusValue = filterStatusSeasons.value;
             titleFilter = filterTitleInputSeasons ? filterTitleInputSeasons.value.toLowerCase().trim() : '';
         } else {
             sortValue = filterSortBy.value;

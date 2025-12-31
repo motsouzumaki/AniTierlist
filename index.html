@@ -176,8 +176,8 @@
                                         class="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2"></select>
                                     <select id="filter-sort-direction"
                                         class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2">
+                                        <option value="ASC" selected>Asc</option>
                                         <option value="DESC">Desc</option>
-                                        <option value="ASC">Asc</option>
                                     </select>
                                     <button id="layout-toggle-btn"
                                         class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 px-2 rounded-md hover:text-primary">
@@ -232,8 +232,8 @@
                                     <div class="flex gap-2">
                                         <select id="filter-sort-direction-sync"
                                             class="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-md py-1.5 px-2">
+                                            <option value="ASC" selected>Asc</option>
                                             <option value="DESC">Desc</option>
-                                            <option value="ASC">Asc</option>
                                         </select>
                                         <button id="layout-toggle-btn-sync"
                                             class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 px-2 rounded-md hover:text-primary">
@@ -264,6 +264,7 @@
                             <div class="grid grid-cols-2 gap-2">
                                 <select id="season-select"
                                     class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-lg p-2">
+                                    <option value="" selected>All</option>
                                     <option value="WINTER">Winter</option>
                                     <option value="SPRING">Spring</option>
                                     <option value="SUMMER">Summer</option>
@@ -285,18 +286,18 @@
                             <div id="global-filter-controls-seasons"
                                 class="hidden flex-col gap-3 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl">
                                 <!-- Filter controls -->
-                                <div class="flex flex-col gap-2">
-                                    <select id="filter-sort-by-seasons"
-                                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-md py-1.5 px-2">
-                                        <option value="popularity">Popularity</option>
-                                        <option value="averageScore">Score</option>
-                                        <option value="favourites">Favorites</option>
-                                    </select>
+                                <div class="flex flex-col gap-3">
                                     <div class="flex gap-2">
-                                        <select id="filter-sort-direction-seasons"
+                                        <select id="filter-sort-by-seasons"
                                             class="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-md py-1.5 px-2">
+                                            <option value="popularity">Popularity</option>
+                                            <option value="averageScore">Score</option>
+                                            <option value="favourites">Favorites</option>
+                                        </select>
+                                        <select id="filter-sort-direction-seasons"
+                                            class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2">
+                                            <option value="ASC" selected>Asc</option>
                                             <option value="DESC">Desc</option>
-                                            <option value="ASC">Asc</option>
                                         </select>
                                         <button id="layout-toggle-btn-seasons"
                                             class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 px-2 rounded-md hover:text-primary">
@@ -305,6 +306,13 @@
                                     </div>
                                     <select id="filter-format-seasons"
                                         class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2"></select>
+                                    <select id="filter-status-seasons"
+                                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2">
+                                        <option value="all">All Status</option>
+                                        <option value="CURRENT">Watching</option>
+                                        <option value="COMPLETED">Completed</option>
+                                        <option value="PLANNING">Planning</option>
+                                    </select>
                                     <input id="filter-title-input-seasons" type="text" placeholder="Filter by title..."
                                         class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-md py-1.5 px-2">
                                 </div>
