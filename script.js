@@ -243,7 +243,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const nameDiv = document.createElement('div');
             nameDiv.className = 'name';
             nameDiv.style.backgroundColor = tier.color;
+            nameDiv.contentEditable = true;
+            nameDiv.spellcheck = false;
             nameDiv.textContent = tier.name;
+
+            // Inline renaming events
+            nameDiv.addEventListener('blur', () => {
+                const newName = nameDiv.textContent.trim();
+                tier.name = newName; // Update active state
+
+                // Sync with configuration to prevent overwrites
+                if (tierConfig[index]) {
+                    tierConfig[index].name = newName;
+                    localStorage.setItem('aniTierList_tierConfig', JSON.stringify(tierConfig));
+                }
+                saveState();
+            });
+
+            nameDiv.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    nameDiv.blur(); // Trigger blur to save
+                }
+            });
+
             box.appendChild(nameDiv);
             const itemsDiv = document.createElement('div');
             itemsDiv.className = 'items';
@@ -867,8 +890,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedPool) pool = JSON.parse(savedPool);
     }
 
+    // Clear items from Tiers -> Unranked Pool
     function clearRankedTiers() {
-        if (!confirm('Are you sure you want to move all ranked items back to the pool?')) return;
+        if (!confirm('Move all ranked items back to the unranked pool?')) return;
         tiers.forEach(tier => {
             pool.push(...tier.items);
             tier.items = [];
@@ -878,8 +902,41 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPool();
     }
 
+    // DESTRUCTIVE: Clear Everything (Tiers, Pool, Storage)
+    function handleClearAll() {
+        if (!confirm('DANGER: This will delete ALL items, reset tiers to default, and wipe your save data. This cannot be undone.\n\nAre you sure you want to proceed?')) return;
+
+        // 1. Reset State
+        tiers = []; // Will be re-init from defaults
+        pool = [];
+        currentResults = [];
+
+        // 2. Reset Configuration
+        tierConfig = JSON.parse(JSON.stringify(DEFAULT_TIER_CONFIG));
+
+        // 3. Clear Storage
+        localStorage.removeItem('aniTierList_tiers');
+        localStorage.removeItem('aniTierList_pool');
+        localStorage.removeItem('aniTierList_tierConfig');
+        localStorage.removeItem('currentSearchQuery');
+        // We might want to keep preferences like Dark Mode?
+        // The user said "Wipe Storage" but usually prefs are nice to keep.
+        // Let's safe wipe data sections.
+
+        // Re-initialize state to defaults
+        tiers = tierConfig.slice(0, 4).map(cfg => ({ name: cfg.name, color: cfg.color, items: [] }));
+
+        // 4. Re-render
+        renderTiers();
+        renderPool();
+        renderTierSettingsList(); // Update settings modal state if open (or next time it opens)
+        saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save'; // Reset save button state
+
+        alert('All data has been cleared.');
+    }
+
     function clearUnrankedPool() {
-        if (!confirm('Are you sure you want to clear the unranked pool? This cannot be undone.')) return;
+        if (!confirm('Are you sure you want to clear the unranked pool? The items will be deleted.')) return;
         pool = [];
         saveState();
         renderPool();
@@ -1160,6 +1217,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // exportBtn listener is at end of file
         saveBtn.addEventListener('click', saveState);
         clearRankedTiersBtn.addEventListener('click', clearRankedTiers);
+        const clearAllBtn = document.getElementById('clear-all-btn');
+        if (clearAllBtn) clearAllBtn.addEventListener('click', handleClearAll);
         clearUnrankedPoolBtn.addEventListener('click', clearUnrankedPool);
 
         // Settings modal
@@ -1853,6 +1912,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalSources = [];
 
             // Convert external images to base64 data URLs to avoid CORS issues
+            // This modifies the LIVE DOM temporarily, which is efficient but risky if crash.
+            // We restore it in finally block.
             let processedCount = 0;
             for (const img of images) {
                 const src = img.src;
@@ -1878,39 +1939,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
             exportBtn.innerHTML = '<i class="fas fa-cog fa-spin"></i> RENDERING...';
 
-            // Clone the tier container for export (to avoid affecting the original)
-            const clone = tierContainer.cloneNode(true);
-            clone.style.position = 'absolute';
-            clone.style.left = '-9999px';
-            clone.style.backgroundColor = '#17212b';
-            document.body.appendChild(clone);
-
-            // Copy image sources to clone
-            const cloneImages = clone.querySelectorAll('.album img');
-            const origImages = tierContainer.querySelectorAll('.album img');
-            cloneImages.forEach((cloneImg, i) => {
-                if (origImages[i]) {
-                    cloneImg.src = origImages[i].src;
-                }
-            });
-
-            await new Promise(resolve => setTimeout(resolve, 300));
-
-            // Render with html2canvas (Scale 2 for better quality)
-            const canvas = await html2canvas(clone, {
-                backgroundColor: '#17212b',
-                scale: 2,
+            // Use html2canvas with onclone to enforce styles
+            const canvas = await html2canvas(tierContainer, {
+                backgroundColor: '#17212b', // Dark background for export
+                scale: 2, // High resolution
                 logging: false,
                 useCORS: true,
-                allowTaint: true
-            });
+                allowTaint: true,
+                windowWidth: 1280, // Force desktop width context
+                onclone: (clonedDoc) => {
+                    const clonedContainer = clonedDoc.getElementById('tier-container');
+                    if (clonedContainer) {
+                        // Force container to be wide enough for desktop layout
+                        clonedContainer.style.width = '1000px';
+                        clonedContainer.style.maxWidth = 'none';
+                        clonedContainer.style.margin = '0 auto';
+                    }
 
-            // Remove clone
-            document.body.removeChild(clone);
+                    // Fix Label styling for Export
+                    const labels = clonedDoc.querySelectorAll('.box .name');
+                    labels.forEach(el => {
+                        el.style.minWidth = '80px';
+                        el.style.width = '80px';
+                        el.style.flexShrink = '0';
+                        el.style.display = 'flex';
+                        el.style.alignItems = 'center';
+                        el.style.justifyContent = 'center';
 
-            // Restore original sources
-            originalSources.forEach(({ img, original }) => {
-                img.src = original;
+                        // Text Visibility
+                        el.style.fontSize = '24px';
+                        el.style.fontWeight = 'bold';
+                        el.style.color = '#000'; // Ensure black text for visibility
+                        el.style.lineHeight = '1';
+                        el.style.whiteSpace = 'nowrap';
+                        el.style.overflow = 'hidden';
+                    });
+                }
             });
 
             // Create download link
@@ -1921,16 +1985,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Success feedback
             exportBtn.innerHTML = '<i class="fas fa-check"></i> SUCCESS!';
-            setTimeout(() => {
-                exportBtn.innerHTML = originalLabel;
-                exportBtn.disabled = false;
-            }, 2000);
 
         } catch (error) {
             console.error('Error exporting tierlist:', error);
             alert('EXPORT_FAILED: ' + error.message);
-            exportBtn.innerHTML = originalLabel;
-            exportBtn.disabled = false;
+        } finally {
+            // ALWAYS restore original image sources
+            originalSources.forEach(({ img, original }) => {
+                img.src = original;
+            });
+
+            setTimeout(() => {
+                exportBtn.innerHTML = originalLabel;
+                exportBtn.disabled = false;
+            }, 2000);
         }
     }
 

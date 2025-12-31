@@ -107,18 +107,12 @@
                     class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-600 dark:text-slate-200 transition-all text-sm font-medium">
                     <i class="fas fa-moon"></i>
                 </button>
-                <button id="settings-btn"
-                    class="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-600 dark:text-slate-200 transition-all text-sm font-medium">
-                    <i class="fas fa-cog mr-2"></i>Settings
-                </button>
+
                 <button id="save-btn"
                     class="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-primary font-medium hover:bg-slate-50 transition-all text-sm shadow-sm">
                     <i class="fas fa-save mr-2"></i>Save
                 </button>
-                <button id="export-btn"
-                    class="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium transition-all text-sm shadow-lg shadow-primary/20">
-                    <i class="fas fa-download mr-2"></i>Export
-                </button>
+
             </div>
         </div>
     </header>
@@ -329,8 +323,26 @@
                 <div id="tier-list-container-wrapper"
                     class="bg-card-bg dark:bg-dark-card rounded-2xl shadow-soft border border-slate-100 dark:border-slate-700 p-6 min-h-[600px]">
 
+                    <!-- Tier List Toolbar -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Rankings</h3>
+                        <button id="settings-btn"
+                            class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all text-xs font-medium">
+                            <i class="fas fa-cog mr-2"></i>Settings
+                        </button>
+                    </div>
+
                     <div id="tier-container" class="flex flex-col gap-3 mb-6">
                         <!-- Tiers injected here -->
+                    </div>
+
+                    <!-- Primary Action: Export -->
+                    <div class="mb-4">
+                        <button id="export-btn"
+                            class="w-full py-2.5 bg-primary hover:bg-primary-hover text-white font-display font-medium rounded-lg shadow-md shadow-primary/20 transition-all text-sm flex items-center justify-center gap-2 transform hover:scale-[1.01] active:scale-[0.99]">
+                            <i class="fas fa-download"></i>
+                            <span>Download PNG</span>
+                        </button>
                     </div>
 
                     <div class="flex justify-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
@@ -343,8 +355,12 @@
                             <i class="fas fa-minus mr-1"></i> Rem Tier
                         </button>
                         <button id="clear-ranked-tiers-btn"
-                            class="px-4 py-2 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-full text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors">
-                            <i class="fas fa-trash mr-1"></i> Reset
+                            class="px-4 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-500 rounded-full text-xs font-bold hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors">
+                            <i class="fas fa-reply mr-1"></i> Clear Tiers
+                        </button>
+                        <button id="clear-all-btn"
+                            class="px-4 py-2 bg-rose-600 text-white rounded-full text-xs font-bold hover:bg-rose-700 shadow-sm transition-colors">
+                            <i class="fas fa-bomb mr-1"></i> Clear All
                         </button>
                     </div>
                 </div>

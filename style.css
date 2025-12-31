@@ -317,10 +317,26 @@
 @media (max-width: 768px) {
 
     /* Scale tierlist items to ~70% of desktop size (70px -> 49px) */
-    .album,
-    .box .items .album {
+    /* Unranked pool items remain fixed size */
+    .album {
         width: 49px;
         height: 70px;
+    }
+
+    /* Tier Row Items: Force 10 columns */
+    .box .items {
+        display: grid !important;
+        grid-template-columns: repeat(10, 1fr) !important;
+        gap: 2px !important;
+        padding: 2px !important;
+    }
+
+    /* Fluid width for Tier Items to fit in grid */
+    .box .items .album {
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 0.7 !important;
+        border-radius: 3px;
     }
 
     /* Unranked Pool - Horizontal Scroll */
