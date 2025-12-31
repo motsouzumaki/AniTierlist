@@ -1938,7 +1938,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const originalLabel = exportBtn.innerHTML;
+        // Hardcoded original label to ensure clean reset
+        const ORIGINAL_LABEL = '<i class="fas fa-download"></i><span>Download PNG</span>';
+
         exportBtn.disabled = true;
         exportBtn.innerHTML = '<i class="fas fa-cog fa-spin"></i> PROCESSING...';
 
@@ -2027,14 +2029,23 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('EXPORT_FAILED: ' + error.message);
         } finally {
             // ALWAYS restore original image sources
-            originalSources.forEach(({ img, original }) => {
-                img.src = original;
-            });
+            try {
+                if (originalSources && originalSources.length > 0) {
+                    originalSources.forEach(({ img, original }) => {
+                        if (img) img.src = original;
+                    });
+                }
+            } catch (restoreError) {
+                console.warn('Error restoring original images:', restoreError);
+            }
 
+            // Ensure button resets even if errors occur above
             setTimeout(() => {
-                exportBtn.innerHTML = originalLabel;
-                exportBtn.disabled = false;
-            }, 2000);
+                if (exportBtn) {
+                    exportBtn.innerHTML = ORIGINAL_LABEL;
+                    exportBtn.disabled = false;
+                }
+            }, 500); // 500ms delay is enough
         }
     }
 
