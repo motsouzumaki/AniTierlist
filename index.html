@@ -136,6 +136,8 @@
                             class="flex-1 py-3 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Sync</button>
                         <button id="tab-seasons"
                             class="flex-1 py-3 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Seasons</button>
+                        <button id="tab-import"
+                            class="flex-1 py-3 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 block">Import</button>
                     </div>
 
                     <div class="p-5">
@@ -320,6 +322,46 @@
 
                             <div id="season-results"
                                 class="grid grid-cols-3 gap-2 max-h-[350px] overflow-y-auto custom-scrollbar pr-1">
+                            </div>
+                        </div>
+
+                        <!-- Panel: Import -->
+                        <div id="panel-import" class="hidden space-y-6">
+                            <!-- URL Import -->
+                            <div class="space-y-2">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">From URL</h4>
+                                <div
+                                    class="flex gap-2 bg-slate-50 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <input id="import-url-input" type="text" placeholder="Paste image URL..."
+                                        class="flex-1 bg-transparent px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none">
+                                    <button id="import-url-btn"
+                                        class="bg-white dark:bg-slate-800 text-primary px-3 rounded-lg shadow-sm hover:text-primary-hover transition-colors font-medium text-xs">
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- File Import -->
+                            <div class="space-y-2">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">From File</h4>
+                                <label
+                                    class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <i class="fas fa-cloud-upload-alt text-2xl text-slate-400 mb-2"></i>
+                                        <p class="text-xs text-slate-500"><span class="font-semibold">Click to
+                                                upload</span>
+                                            or drag and drop</p>
+                                        <p class="text-[10px] text-slate-400 mt-1">PNG, JPG, GIF up to 5MB</p>
+                                    </div>
+                                    <input id="import-file-input" type="file" class="hidden" accept="image/*"
+                                        multiple />
+                                </label>
+                            </div>
+
+                            <div
+                                class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 rounded-lg text-xs">
+                                <i class="fas fa-info-circle mr-1"></i> Imported images will be added directly to the
+                                Unranked Pool.
                             </div>
                         </div>
                     </div>

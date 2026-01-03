@@ -13,6 +13,7 @@ AniTierlist is an easy‑to‑use web app for creating tier lists for **Anime**,
 - **Perfect for Mobile** – A smooth experience on your phone with easy-to-read text, smaller icons, and clear controls.
 - **Clean Layout** – The unranked pool scrolls sideways to save space, keeping your screen clutter-free.
 - **Dark Mode** – Easy on the eyes for those late-night ranking sessions.
+- **External Image Import** – Don't see what you're looking for? Import any image via URL or upload multiple local files directly into your rankings.
 - **Export & Share** – One click to save your masterpiece as an image.
 
 ## Installation & Usage
@@ -23,8 +24,8 @@ AniTierlist is an easy‑to‑use web app for creating tier lists for **Anime**,
    ```
 2. Launch `index.html` in your browser.
 3. Choose **Anime**, **Manga**, or **Characters**.
-4. Type in the search bar to get instant results.
-5. Press **+ IMPORT** to add items to your pool.
+4. Type in the search bar or use the **Import** tab to add custom images via URL or local file upload.
+5. Press the **+ Add to Pool** button on search results or import items to add them to your pool.
 6. Drag items into the tier list.
 7. Export your list as a PNG.
 

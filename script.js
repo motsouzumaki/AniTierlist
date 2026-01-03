@@ -132,9 +132,14 @@ const poolItems = document.getElementById('pool-items');
 const tabSearch = document.getElementById('tab-search');
 const tabSync = document.getElementById('tab-sync');
 const tabSeasons = document.getElementById('tab-seasons');
+const tabImport = document.getElementById('tab-import');
 const panelSearch = document.getElementById('panel-search');
 const panelSync = document.getElementById('panel-sync');
 const panelSeasons = document.getElementById('panel-seasons');
+const panelImport = document.getElementById('panel-import');
+const importUrlInput = document.getElementById('import-url-input');
+const importUrlBtn = document.getElementById('import-url-btn');
+const importFileInput = document.getElementById('import-file-input');
 const searchInput = document.getElementById('search-input');
 const searchBtn = document.getElementById('search-btn');
 const searchResultsContainer = document.getElementById('search-results');
@@ -316,19 +321,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
             deleteBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                e.stopPropagation(); // Prevent drag start or clickthru
+                e.stopPropagation(); // Stop click propagation
 
-                // Remove from pool array
-                pool = pool.filter(i => i.id !== item.id);
-                saveState();
+                // Confirm strictly for imported items if needed, but usually instant delete is preferred for pool
+                // pool = pool.filter(i => i.id !== item.id);
 
-                // Animate removal
-                wrapper.style.transform = 'scale(0.5)';
-                wrapper.style.opacity = '0';
-                setTimeout(() => {
+                // Robust removal: Find index
+                const idx = pool.findIndex(i => i.id === item.id);
+                if (idx !== -1) {
+                    pool.splice(idx, 1);
+                    saveState();
+
+                    // Animate removal
+                    wrapper.style.transform = 'scale(0.01)';
+                    wrapper.style.opacity = '0';
+                    setTimeout(() => {
+                        renderPool();
+                    }, 200);
+                } else {
+                    // Fallback: Force re-render if state desync
                     renderPool();
-                }, 200);
+                }
             });
+            // Stop mousedown/touchstart propagation to prevent dragstart on the button
+            deleteBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+            deleteBtn.addEventListener('touchstart', (e) => e.stopPropagation());
+
             wrapper.appendChild(deleteBtn);
         }
 
@@ -710,6 +728,93 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Import Feature Functions
+    function handleUrlImport() {
+        const url = importUrlInput.value.trim();
+        if (!url) return;
+
+        // Basic validation
+        if (!url.match(/^https?:\/\/.+/i) && !url.match(/^data:image\//)) {
+            alert('Please enter a valid URL starting with http:// or https://');
+            return;
+        }
+
+        addToPool({
+            id: 'custom-' + Date.now(),
+            title: 'Imported Image',
+            img: url
+        });
+
+        importUrlInput.value = '';
+
+        // Visual feedback
+        const originalText = importUrlBtn.textContent;
+        importUrlBtn.textContent = 'Added!';
+        importUrlBtn.classList.add('text-green-500');
+        setTimeout(() => {
+            importUrlBtn.textContent = originalText;
+            importUrlBtn.classList.remove('text-green-500');
+        }, 1000);
+    }
+
+    async function handleFileUpload(e) {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+
+        // Visual feedback
+        const importBtn = document.querySelector('label[for="import-file-input"]');
+        if (importBtn) importBtn.classList.add('opacity-50', 'pointer-events-none');
+
+        const newItems = [];
+
+        // Create a promise for each file reading
+        const readPromises = files.map(file => {
+            return new Promise((resolve) => {
+                if (!file.type.startsWith('image/')) {
+                    resolve(null); // Skip non-images
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    resolve({
+                        id: 'local-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                        title: file.name,
+                        img: event.target.result
+                    });
+                };
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(file);
+            });
+        });
+
+        // Wait for ALL files to be read
+        const results = await Promise.all(readPromises);
+
+        // Filter valid results
+        results.forEach(item => {
+            if (item) newItems.push(item);
+        });
+
+        if (newItems.length > 0) {
+            // Add all to pool at once (avoiding duplicates if any)
+            newItems.forEach(item => {
+                const existsInPool = pool.some(i => i.id === item.id);
+                const existsInTiers = tiers.some(t => t.items.some(i => i.id === item.id));
+                if (!existsInPool && !existsInTiers) {
+                    pool.push(item);
+                }
+            });
+
+            saveState();
+            renderPool();
+        }
+
+        // Reset
+        e.target.value = '';
+        if (importBtn) importBtn.classList.remove('opacity-50', 'pointer-events-none');
+    }
+
     // Touch Handling Functions
     // Touch Handling Functions
     function handleTouchStart(e, item, source) {
@@ -1049,8 +1154,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper to set active tab styling
     function setActiveTab(tab) {
-        const tabs = [tabSearch, tabSync, tabSeasons];
-        const panels = [panelSearch, panelSync, panelSeasons];
+        const tabs = [tabSearch, tabSync, tabSeasons, tabImport];
+        const panels = [panelSearch, panelSync, panelSeasons, panelImport];
+
 
         tabs.forEach((t, i) => {
             if (t === tab) {
@@ -1157,6 +1263,17 @@ document.addEventListener('DOMContentLoaded', () => {
             activeTab = 'seasons';
             setActiveTab(tabSeasons);
         });
+
+        tabImport.addEventListener('click', () => {
+            clearAllResults();
+            activeTab = 'import';
+            setActiveTab(tabImport);
+        });
+
+        // Import Listeners
+        importUrlBtn.addEventListener('click', handleUrlImport);
+        importFileInput.addEventListener('change', handleFileUpload);
+
 
         const debouncedSearch = debounce(performSearch, 500);
 
