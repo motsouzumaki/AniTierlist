@@ -247,7 +247,8 @@ function generateShareableState() {
     tiers.forEach((tier, index) => {
         tier.items.forEach(item => {
             if (item.id && !String(item.id).startsWith('local-') && !String(item.id).startsWith('custom-')) {
-                shareData.push({ i: parseInt(item.id), t: index });
+                // Compact Tuple Format: [id, tierIndex]
+                shareData.push([parseInt(item.id), index]);
             } else {
                 excludedCount++;
             }
@@ -257,7 +258,8 @@ function generateShareableState() {
     // Process Pool (t: -1 for pool)
     pool.forEach(item => {
         if (item.id && !String(item.id).startsWith('local-') && !String(item.id).startsWith('custom-')) {
-            shareData.push({ i: parseInt(item.id), t: -1 });
+            // Compact Tuple Format: [id, -1]
+            shareData.push([parseInt(item.id), -1]);
         } else {
             excludedCount++;
         }
@@ -298,113 +300,7 @@ function handleShare() {
     }
 }
 
-async function restoreFromHash(hash) {
-    try {
-        // Robust Decoding: URI Component -> Base64 -> JSON
-        // Handle cases where browser might have already decoded the hash partially or fully?
-        // window.location.hash usually returns raw encoded fragment in some browsers, but let's be safe.
-        // If the hash contains %, decodeURIComponent will handle it.
-        // If it's just base64 chars (no special chars), decodeURIComponent is harmless.
 
-        let json;
-        try {
-            json = atob(decodeURIComponent(hash));
-        } catch (e) {
-            // Fallback: Try raw atob if decodeURIComponent failed or if it wasn't encoded
-            json = atob(hash);
-        }
-
-        const data = JSON.parse(json);
-
-        if (!Array.isArray(data)) throw new Error('Invalid format');
-
-        showToast('Loading shared tier list...', 'success');
-
-        // Extract IDs for Batch Fetch
-        const ids = data.map(item => item.i);
-        if (ids.length === 0) return;
-
-        // Reset State
-        tiers.forEach(t => t.items = []);
-        pool = [];
-
-        // Batch Fetch Logic
-        // Anilist Page query handles about 50 IDs comfortably? limiting to 50 per chunk is safe, or using page logic.
-        // Let's split into chunks of 50 just to be safe.
-        const chunkSize = 50;
-        const fetchedItemsMap = new Map();
-
-        for (let i = 0; i < ids.length; i += chunkSize) {
-            const chunk = ids.slice(i, i + chunkSize);
-            const query = `query ($ids: [Int]) {
-                Page(perPage: 50) {
-                    media(id_in: $ids) {
-                        id
-                        title { romaji english }
-                        coverImage { extraLarge }
-                        format
-                        startDate { year }
-                    }
-                }
-            }`;
-
-            const response = await fetch(ANILIST_API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ query, variables: { ids: chunk } })
-            });
-
-            const result = await response.json();
-            if (result.errors) console.warn('Chunk fetch error:', result.errors);
-
-            if (result.data && result.data.Page && result.data.Page.media) {
-                result.data.Page.media.forEach(media => {
-                    fetchedItemsMap.set(media.id, {
-                        id: media.id,
-                        title: media.title.english || media.title.romaji,
-                        img: media.coverImage.extraLarge,
-                        format: media.format
-                    });
-                });
-            }
-        }
-
-        // Reconstruct
-        let restoredCount = 0;
-        data.forEach(item => {
-            const media = fetchedItemsMap.get(item.i);
-            if (media) {
-                // Determine destination
-                if (item.t === -1) {
-                    pool.push(media);
-                } else if (tiers[item.t]) {
-                    tiers[item.t].items.push(media);
-                }
-                restoredCount++;
-            }
-        });
-
-        renderTiers();
-        renderPool();
-        showToast(`Loaded ${restoredCount} items!`, 'success');
-
-        // Optional: Remove hash after loading to prevent reload-loop if user refreshes and wants their own data? 
-        // Or keep it so they can bookmark? Keep it.
-
-    } catch (e) {
-        console.error('Failed to load from hash:', e);
-
-        let msg = 'Invalid share link!';
-        if (e.message.includes('fetch')) msg = 'Network error: Check internet';
-        if (e.message.includes('JSON')) msg = 'Corrupted share data';
-
-        showToast(msg, 'error');
-        // Fallback to local
-        loadState();
-        renderTiers();
-        renderPool();
-    }
-}
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -425,6 +321,94 @@ document.addEventListener('DOMContentLoaded', () => {
         loadState();
         renderTiers();
         renderPool();
+    }
+
+    // --- Shared State Restoration Logic ---
+    async function restoreFromHash(hash) {
+        try {
+            let json;
+            try {
+                json = atob(decodeURIComponent(hash));
+            } catch (e) {
+                json = atob(hash);
+            }
+            const data = JSON.parse(json);
+            if (!Array.isArray(data)) throw new Error('Invalid format');
+
+            showToast('Loading shared tier list...', 'success');
+            const ids = data.map(item => Array.isArray(item) ? item[0] : item.i);
+            if (ids.length === 0) return;
+
+            tiers.forEach(t => t.items = []);
+            pool = [];
+
+            const chunkSize = 50;
+            const fetchedItemsMap = new Map();
+
+            for (let i = 0; i < ids.length; i += chunkSize) {
+                const chunk = ids.slice(i, i + chunkSize);
+                const query = `query ($ids: [Int]) {
+                    Page(perPage: 50) {
+                        media(id_in: $ids) {
+                            id
+                            title { romaji english }
+                            coverImage { extraLarge }
+                            format
+                            startDate { year }
+                        }
+                    }
+                }`;
+                const response = await fetch(ANILIST_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ query, variables: { ids: chunk } })
+                });
+                const result = await response.json();
+                if (result.errors) console.warn('Chunk fetch error:', result.errors);
+                if (result.data && result.data.Page && result.data.Page.media) {
+                    result.data.Page.media.forEach(media => {
+                        fetchedItemsMap.set(media.id, {
+                            id: media.id,
+                            title: media.title.english || media.title.romaji,
+                            img: media.coverImage.extraLarge,
+                            format: media.format
+                        });
+                    });
+                }
+            }
+
+            let restoredCount = 0;
+            data.forEach(item => {
+                const isTuple = Array.isArray(item);
+                const id = isTuple ? item[0] : item.i;
+                const tierIndex = isTuple ? item[1] : item.t;
+                const media = fetchedItemsMap.get(id);
+                if (media) {
+                    if (tierIndex === -1) {
+                        pool.push(media);
+                    } else if (tiers[tierIndex]) {
+                        tiers[tierIndex].items.push(media);
+                    }
+                    restoredCount++;
+                }
+            });
+
+            renderTiers();
+            renderPool();
+            showToast(`Loaded ${restoredCount} items!`, 'success');
+
+        } catch (e) {
+            console.error('Failed to load from hash:', e);
+            let msg = 'Invalid share link!';
+            if (e.message.includes('fetch')) msg = 'Network error';
+            if (e.message.includes('JSON')) msg = 'Corrupted data';
+            showToast(msg, 'error');
+            alert(`Error loading share link:\n${e.message}`);
+
+            loadState();
+            renderTiers();
+            renderPool();
+        }
     }
 
     setupEventListeners();
