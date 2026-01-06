@@ -153,6 +153,7 @@ const syncBtn = document.getElementById('sync-btn');
 const syncStatus = document.getElementById('sync-status');
 const syncResultsContainer = document.getElementById('sync-results');
 const exportBtn = document.getElementById('export-btn');
+const shareBtn = document.getElementById('share-btn');
 const saveBtn = document.getElementById('save-btn');
 const clearRankedTiersBtn = document.getElementById('clear-ranked-tiers-btn');
 const clearUnrankedPoolBtn = document.getElementById('clear-unranked-pool-btn');
@@ -216,6 +217,176 @@ let tempTierConfig = []; // Temporary state for the modal
 // Dark Mode Toggle
 const darkModeToggleBtn = document.getElementById('darkModeToggle');
 
+// Toast Function
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    let icon = 'check-circle';
+    if (type === 'error') icon = 'exclamation-circle';
+    if (type === 'warning') icon = 'exclamation-triangle';
+
+    toast.innerHTML = `<i class="fas fa-${icon}"></i> <span>${message}</span>`;
+
+    container.appendChild(toast);
+
+    // Auto remove
+    setTimeout(() => {
+        toast.style.animation = 'toast-out 0.3s forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// Share Logic
+function generateShareableState() {
+    const shareData = [];
+    let excludedCount = 0;
+
+    // Process Tiers
+    tiers.forEach((tier, index) => {
+        tier.items.forEach(item => {
+            if (item.id && !String(item.id).startsWith('local-') && !String(item.id).startsWith('custom-')) {
+                shareData.push({ i: parseInt(item.id), t: index });
+            } else {
+                excludedCount++;
+            }
+        });
+    });
+
+    // Process Pool (t: -1 for pool)
+    pool.forEach(item => {
+        if (item.id && !String(item.id).startsWith('local-') && !String(item.id).startsWith('custom-')) {
+            shareData.push({ i: parseInt(item.id), t: -1 });
+        } else {
+            excludedCount++;
+        }
+    });
+
+    return { payload: shareData, excludedCount };
+}
+
+function handleShare() {
+    const { payload, excludedCount } = generateShareableState();
+
+    if (payload.length === 0 && excludedCount > 0) {
+        showToast('No shareable items found (custom images excluded)', 'error');
+        return;
+    }
+
+    if (payload.length === 0) {
+        showToast('Tier list is empty!', 'warning');
+        return;
+    }
+
+    try {
+        const json = JSON.stringify(payload);
+        const hash = btoa(json);
+        const shareUrl = `${window.location.origin}${window.location.pathname}#${hash}`;
+
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            if (excludedCount > 0) {
+                showToast(`Link copied! (${excludedCount} custom images excluded)`, 'warning');
+            } else {
+                showToast('Link copied to clipboard!', 'success');
+            }
+        });
+    } catch (e) {
+        console.error('Share generation failed:', e);
+        showToast('Failed to generate link', 'error');
+    }
+}
+
+async function restoreFromHash(hash) {
+    try {
+        const json = atob(hash);
+        const data = JSON.parse(json);
+
+        if (!Array.isArray(data)) throw new Error('Invalid format');
+
+        showToast('Loading shared tier list...', 'success');
+
+        // Extract IDs for Batch Fetch
+        const ids = data.map(item => item.i);
+        if (ids.length === 0) return;
+
+        // Reset State
+        tiers.forEach(t => t.items = []);
+        pool = [];
+
+        // Batch Fetch Logic
+        // Anilist Page query handles about 50 IDs comfortably? limiting to 50 per chunk is safe, or using page logic.
+        // Let's split into chunks of 50 just to be safe.
+        const chunkSize = 50;
+        const fetchedItemsMap = new Map();
+
+        for (let i = 0; i < ids.length; i += chunkSize) {
+            const chunk = ids.slice(i, i + chunkSize);
+            const query = `query ($ids: [Int]) {
+                Page(perPage: 50) {
+                    media(id_in: $ids) {
+                        id
+                        title { romaji english }
+                        coverImage { extraLarge }
+                        format
+                        startDate { year }
+                    }
+                }
+            }`;
+
+            const response = await fetch(ANILIST_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ query, variables: { ids: chunk } })
+            });
+
+            const result = await response.json();
+            if (result.errors) console.warn('Chunk fetch error:', result.errors);
+
+            if (result.data && result.data.Page && result.data.Page.media) {
+                result.data.Page.media.forEach(media => {
+                    fetchedItemsMap.set(media.id, {
+                        id: media.id,
+                        title: media.title.english || media.title.romaji,
+                        img: media.coverImage.extraLarge,
+                        format: media.format
+                    });
+                });
+            }
+        }
+
+        // Reconstruct
+        let restoredCount = 0;
+        data.forEach(item => {
+            const media = fetchedItemsMap.get(item.i);
+            if (media) {
+                // Determine destination
+                if (item.t === -1) {
+                    pool.push(media);
+                } else if (tiers[item.t]) {
+                    tiers[item.t].items.push(media);
+                }
+                restoredCount++;
+            }
+        });
+
+        renderTiers();
+        renderPool();
+        showToast(`Loaded ${restoredCount} items!`, 'success');
+
+        // Optional: Remove hash after loading to prevent reload-loop if user refreshes and wants their own data? 
+        // Or keep it so they can bookmark? Keep it.
+
+    } catch (e) {
+        console.error('Failed to load from hash:', e);
+        showToast('Invalid share link!', 'error');
+        // Fallback to local
+        loadState();
+        renderTiers();
+        renderPool();
+    }
+}
+
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Dark Mode
@@ -228,9 +399,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (darkModeToggleBtn) darkModeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
     }
 
-    loadState();
-    renderTiers();
-    renderPool();
+    // Check for Shared Hash FIRST
+    if (window.location.hash && window.location.hash.length > 1) {
+        restoreFromHash(window.location.hash.substring(1));
+    } else {
+        loadState();
+        renderTiers();
+        renderPool();
+    }
+
     setupEventListeners();
 
     // Explicitly set initial state and update buttons
@@ -1363,7 +1540,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         syncBtn.addEventListener('click', syncUserList);
         seasonSearchBtn.addEventListener('click', handleSeasonSearch);
-        // exportBtn listener is at end of file
+        exportBtn.addEventListener('click', exportTierListAsPNG); // Ensure this matches existing
+        if (shareBtn) shareBtn.addEventListener('click', handleShare);
         saveBtn.addEventListener('click', saveState);
         clearRankedTiersBtn.addEventListener('click', clearRankedTiers);
         const clearAllBtn = document.getElementById('clear-all-btn');

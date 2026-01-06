@@ -386,12 +386,17 @@
                         <!-- Tiers injected here -->
                     </div>
 
-                    <!-- Primary Action: Export -->
-                    <div class="mb-4">
+                    <!-- Primary Actions: Export & Share -->
+                    <div class="mb-4 grid grid-cols-2 gap-3">
                         <button id="export-btn"
-                            class="w-full py-2.5 bg-primary hover:bg-primary-hover text-white font-display font-medium rounded-lg shadow-md shadow-primary/20 transition-all text-sm flex items-center justify-center gap-2 transform hover:scale-[1.01] active:scale-[0.99]">
+                            class="py-2.5 bg-primary hover:bg-primary-hover text-white font-display font-medium rounded-lg shadow-md shadow-primary/20 transition-all text-sm flex items-center justify-center gap-2 transform hover:scale-[1.01] active:scale-[0.99]">
                             <i class="fas fa-download"></i>
-                            <span>Download PNG</span>
+                            <span>Save PNG</span>
+                        </button>
+                        <button id="share-btn"
+                            class="py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-display font-medium rounded-lg shadow-md transition-all text-sm flex items-center justify-center gap-2 transform hover:scale-[1.01] active:scale-[0.99]">
+                            <i class="fas fa-share-alt"></i>
+                            <span>Share Link</span>
                         </button>
                     </div>
 
@@ -436,6 +441,11 @@
             </div>
 
         </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"
+        class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none">
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
