@@ -281,7 +281,8 @@ function handleShare() {
 
     try {
         const json = JSON.stringify(payload);
-        const hash = btoa(json);
+        // Robust Encoding: JSON -> Base64 -> URI Component
+        const hash = encodeURIComponent(btoa(json));
         const shareUrl = `${window.location.origin}${window.location.pathname}#${hash}`;
 
         navigator.clipboard.writeText(shareUrl).then(() => {
@@ -299,7 +300,20 @@ function handleShare() {
 
 async function restoreFromHash(hash) {
     try {
-        const json = atob(hash);
+        // Robust Decoding: URI Component -> Base64 -> JSON
+        // Handle cases where browser might have already decoded the hash partially or fully?
+        // window.location.hash usually returns raw encoded fragment in some browsers, but let's be safe.
+        // If the hash contains %, decodeURIComponent will handle it.
+        // If it's just base64 chars (no special chars), decodeURIComponent is harmless.
+
+        let json;
+        try {
+            json = atob(decodeURIComponent(hash));
+        } catch (e) {
+            // Fallback: Try raw atob if decodeURIComponent failed or if it wasn't encoded
+            json = atob(hash);
+        }
+
         const data = JSON.parse(json);
 
         if (!Array.isArray(data)) throw new Error('Invalid format');
@@ -379,7 +393,12 @@ async function restoreFromHash(hash) {
 
     } catch (e) {
         console.error('Failed to load from hash:', e);
-        showToast('Invalid share link!', 'error');
+
+        let msg = 'Invalid share link!';
+        if (e.message.includes('fetch')) msg = 'Network error: Check internet';
+        if (e.message.includes('JSON')) msg = 'Corrupted share data';
+
+        showToast(msg, 'error');
         // Fallback to local
         loadState();
         renderTiers();
