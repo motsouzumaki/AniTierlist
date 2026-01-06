@@ -358,6 +358,22 @@
                                 </label>
                             </div>
 
+                            <!-- JSON Import -->
+                            <div class="space-y-2">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">From JSON Backup
+                                </h4>
+                                <label
+                                    class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-primary/30 dark:border-primary/40 rounded-xl cursor-pointer bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i class="fas fa-file-import text-xl text-primary mb-1"></i>
+                                        <p class="text-xs text-slate-600 dark:text-slate-300 font-medium">Click to
+                                            import JSON</p>
+                                        <p class="text-[10px] text-slate-400 mt-1">Restore tier list backup</p>
+                                    </div>
+                                    <input id="import-json-input" type="file" class="hidden" accept=".json" />
+                                </label>
+                            </div>
+
                             <div
                                 class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 rounded-lg text-xs">
                                 <i class="fas fa-info-circle mr-1"></i> Imported images will be added directly to the
@@ -397,6 +413,19 @@
                             class="py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-display font-medium rounded-lg shadow-md transition-all text-sm flex items-center justify-center gap-2 transform hover:scale-[1.01] active:scale-[0.99]">
                             <i class="fas fa-share-alt"></i>
                             <span>Share Link</span>
+                        </button>
+                    </div>
+
+                    <!-- Secondary Exports -->
+                    <div class="secondary-exports flex justify-center gap-3 mb-4">
+                        <button id="export-text-btn"
+                            class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-white text-sm py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+                            <i class="fas fa-file-alt"></i> Export Text
+                        </button>
+
+                        <button id="export-json-btn"
+                            class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-white text-sm py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+                            <i class="fas fa-file-code"></i> Save File
                         </button>
                     </div>
 

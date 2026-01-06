@@ -483,6 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
         img.src = item.img;
         img.draggable = true;
         img.classList.add('draggable');
+        img.setAttribute('data-title', item.title);
 
         // Touch Start Listener
         img.addEventListener('touchstart', (e) => handleTouchStart(e, item, source), { passive: false });
@@ -2347,9 +2348,212 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    /**
+     * Exports the tier list as a formatted text file
+     */
+    function exportToTextFile() {
+        let textOutput = "My AniRanker List\n\n";
+
+        // Get all tier rows from the DOM
+        const tierRows = document.querySelectorAll('#tier-container .box');
+
+        tierRows.forEach((tierRow) => {
+            // Extract tier label
+            const labelElement = tierRow.querySelector('.name');
+            const tierLabel = labelElement ? labelElement.textContent.trim() : 'Unknown Tier';
+
+            textOutput += `${tierLabel}\n`;
+
+            // Extract items in this tier
+            const items = tierRow.querySelectorAll('.album img');
+
+            items.forEach((img) => {
+                // Try to get title from data-title attribute or alt text
+                let title = img.getAttribute('data-title') || img.alt || 'Untitled';
+
+                // Clean up the title
+                title = title.trim();
+
+                // For custom images with no title, use a fallback
+                if (!title || title === 'Untitled') {
+                    const src = img.src;
+                    if (src.startsWith('data:')) {
+                        title = 'Custom Image';
+                    } else {
+                        // Try to extract filename from URL
+                        const urlParts = src.split('/');
+                        const filename = urlParts[urlParts.length - 1];
+                        title = filename || 'Custom Image';
+                    }
+                }
+
+                textOutput += `- ${title}\n`;
+            });
+
+            // Add spacing between tiers
+            textOutput += '\n';
+        });
+
+        // Create and trigger download
+        const blob = new Blob([textOutput], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'tierlist.txt';
+        link.click();
+        URL.revokeObjectURL(url);
+
+        showToast('Text file exported!', 'success');
+    }
+
+    /**
+     * Exports the tier list data as a JSON file with custom naming
+     */
+    function exportToJSON() {
+        // Prompt user for filename
+        const filename = prompt("Name your file:", "ani_ranker_backup");
+
+        // If user cancels, stop
+        if (filename === null) {
+            return;
+        }
+
+        // Gather current state - include both pool and tier data
+        const exportData = {
+            version: "1.0",
+            exportDate: new Date().toISOString(),
+            tierConfig: tierConfig,
+            items: []
+        };
+
+        // Process Tiers
+        tiers.forEach((tier, index) => {
+            tier.items.forEach(item => {
+                exportData.items.push({
+                    id: item.id,
+                    title: item.title,
+                    image: item.img,
+                    tierIndex: index
+                });
+            });
+        });
+
+        // Process Pool (tierIndex: -1 for pool)
+        pool.forEach(item => {
+            exportData.items.push({
+                id: item.id,
+                title: item.title,
+                image: item.img,
+                tierIndex: -1
+            });
+        });
+
+        // Convert to JSON string
+        const jsonString = JSON.stringify(exportData, null, 2);
+
+        // Create and trigger download
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${filename}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        showToast('JSON file saved!', 'success');
+    }
+
     // Export button event listener
     if (exportBtn) {
         exportBtn.addEventListener('click', exportTierListAsPNG);
+    }
+
+    // Text export button event listener
+    const exportTextBtn = document.getElementById('export-text-btn');
+    if (exportTextBtn) {
+        exportTextBtn.addEventListener('click', exportToTextFile);
+    }
+
+    // JSON export button event listener
+    const exportJsonBtn = document.getElementById('export-json-btn');
+    if (exportJsonBtn) {
+        exportJsonBtn.addEventListener('click', exportToJSON);
+    }
+
+    /**
+     * Imports tier list data from a JSON file
+     */
+    function importFromJSON(file) {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const jsonData = JSON.parse(e.target.result);
+
+                // Validate JSON structure
+                if (!jsonData.items || !jsonData.tierConfig) {
+                    throw new Error('Invalid JSON format: missing required fields');
+                }
+
+                // Restore tier configuration
+                tierConfig = jsonData.tierConfig;
+                localStorage.setItem('aniTierList_tierConfig', JSON.stringify(tierConfig));
+
+                // Reset current state
+                tiers = tierConfig.map(cfg => ({
+                    name: cfg.name,
+                    color: cfg.color,
+                    items: []
+                }));
+                pool = [];
+
+                // Restore items to their positions
+                jsonData.items.forEach(savedItem => {
+                    const item = {
+                        id: savedItem.id,
+                        title: savedItem.title,
+                        img: savedItem.image
+                    };
+
+                    if (savedItem.tierIndex === -1) {
+                        // Add to pool
+                        pool.push(item);
+                    } else if (savedItem.tierIndex >= 0 && savedItem.tierIndex < tiers.length) {
+                        // Add to tier
+                        tiers[savedItem.tierIndex].items.push(item);
+                    }
+                });
+
+                // Re-render everything
+                renderTiers();
+                renderPool();
+
+                showToast(`Imported ${jsonData.items.length} items from backup!`, 'success');
+
+            } catch (error) {
+                console.error('Import error:', error);
+                showToast('Failed to import JSON: ' + error.message, 'error');
+            }
+        };
+
+        reader.onerror = () => {
+            showToast('Failed to read file', 'error');
+        };
+
+        reader.readAsText(file);
+    }
+
+    // JSON import button event listener
+    const importJsonInput = document.getElementById('import-json-input');
+    if (importJsonInput) {
+        importJsonInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                importFromJSON(file);
+                // Reset input so the same file can be selected again
+                e.target.value = '';
+            }
+        });
     }
 
     // Initialize Search from Persistence
