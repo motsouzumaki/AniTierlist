@@ -360,14 +360,15 @@
 
                             <!-- JSON Import -->
                             <div class="space-y-2">
-                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">From JSON Backup
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Load Saved
+                                    Tierlist
                                 </h4>
                                 <label
                                     class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-primary/30 dark:border-primary/40 rounded-xl cursor-pointer bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors">
                                     <div class="flex flex-col items-center justify-center">
                                         <i class="fas fa-file-import text-xl text-primary mb-1"></i>
                                         <p class="text-xs text-slate-600 dark:text-slate-300 font-medium">Click to
-                                            import JSON</p>
+                                            load your tierlist</p>
                                         <p class="text-[10px] text-slate-400 mt-1">Restore tier list backup</p>
                                     </div>
                                     <input id="import-json-input" type="file" class="hidden" accept=".json" />
@@ -402,30 +403,38 @@
                         <!-- Tiers injected here -->
                     </div>
 
-                    <!-- Primary Actions: Export & Share -->
-                    <div class="mb-4 grid grid-cols-2 gap-3">
+                    <!-- Primary Actions: Save Options -->
+                    <div class="mb-3 grid grid-cols-2 gap-3">
                         <button id="export-btn"
                             class="py-2.5 bg-primary hover:bg-primary-hover text-white font-display font-medium rounded-lg shadow-md shadow-primary/20 transition-all text-sm flex items-center justify-center gap-2 transform hover:scale-[1.01] active:scale-[0.99]">
                             <i class="fas fa-download"></i>
                             <span>Save PNG</span>
                         </button>
-                        <button id="share-btn"
-                            class="py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-display font-medium rounded-lg shadow-md transition-all text-sm flex items-center justify-center gap-2 transform hover:scale-[1.01] active:scale-[0.99]">
-                            <i class="fas fa-share-alt"></i>
-                            <span>Share Link</span>
+                        <button id="export-json-btn"
+                            class="py-2.5 bg-primary hover:bg-primary-hover text-white font-display font-medium rounded-lg shadow-md shadow-primary/20 transition-all text-sm flex items-center justify-center gap-2 transform hover:scale-[1.01] active:scale-[0.99]">
+                            <i class="fas fa-save"></i>
+                            <span>Save the Tierlist</span>
                         </button>
                     </div>
 
-                    <!-- Secondary Exports -->
-                    <div class="secondary-exports flex justify-center gap-3 mb-4">
+                    <!-- Share Link (Full Width) -->
+                    <div class="mb-2">
+                        <button id="share-btn"
+                            class="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-display font-medium rounded-lg shadow-md transition-all text-sm flex items-center justify-center gap-2 transform hover:scale-[1.01] active:scale-[0.99]">
+                            <i class="fas fa-share-alt"></i>
+                            <span>Share Link</span>
+                        </button>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 text-center mt-2 italic">
+                            <i class="fas fa-info-circle mr-1"></i>Share Link only preserves AniList items, not
+                            local/custom images
+                        </p>
+                    </div>
+
+                    <!-- Secondary Export -->
+                    <div class="secondary-exports flex justify-center mb-4">
                         <button id="export-text-btn"
                             class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-white text-sm py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
                             <i class="fas fa-file-alt"></i> Export Text
-                        </button>
-
-                        <button id="export-json-btn"
-                            class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-white text-sm py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
-                            <i class="fas fa-file-code"></i> Save File
                         </button>
                     </div>
 

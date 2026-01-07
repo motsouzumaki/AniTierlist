@@ -15,7 +15,9 @@ AniTierlist is an easy‑to‑use web app for creating tier lists for **Anime**,
 - **Dark Mode** – Easy on the eyes for those late-night ranking sessions.
 - **External Image Import** – Don't see what you're looking for? Import any image via URL or upload multiple local files directly into your rankings.
 - **Share Your Lists** – Generate a shareable URL hash link to instantly share your tier list with friends. No database required!
-- **Backup & Restore** – Export your entire tier list state as a JSON file. Perfect for moving between devices or keeping long-term backups of your rankings.
+  > **Note:** Share Link only works with anime/manga/characters from the AniList database. Local/custom imported images will not be included in shared links.
+- **Backup & Restore** – Save your complete tier list state as a JSON file. Perfect for moving between devices or keeping long-term backups of your rankings.
+  > **Note:** Unlike Share Link, JSON export/import preserves ALL items including local/custom imported images.
 - **Multiple Export Options** – Share your list exactly how you want: 
   - **PNG Image**: High-quality visual snapshot for social media.
   - **Text List**: A cleanly formatted text file listing every anime by tier—perfect for sharing lists in Discord or forums.
@@ -32,12 +34,12 @@ AniTierlist is an easy‑to‑use web app for creating tier lists for **Anime**,
 4. **Rank Your Items**: Drag and drop items from the pool into the tiers. You can reorder items within tiers or swap them as needed.
 5. **Customize Tiers**: Click on tier names to rename them or change their colors to match your aesthetic.
 6. **Save & Share**:
-   - **PNG Image**: Click "Download PNG" for a visual copy.
-   - **Text List**: Click "Export Text" for a formatted character list by tier.
-   - **Full Backup**: Click "Save File" to download a JSON backup of your entire session.
-   - **Instant Share**: Click "Share Link" to generate a unique URL hash that lets others see your configuration instantly.
+   - **Save the Tierlist**: Click to download a complete JSON backup with all items and settings (including custom images).
+   - **Share Link**: Generate a URL hash to share your tierlist instantly (AniList items only).
+   - **Export Text**: Download a formatted text list of your rankings.
+   - **Save PNG**: Download a visual snapshot of your tier list.
 7. **Restore**:
-   - Have a JSON backup? Go to the **Import** tab and select **From JSON Backup** to instantly restore your tiers, items, and settings.
+   - Have a JSON backup? Go to the **Import** tab and select **Load Saved Tierlist** to instantly restore your tiers, items, and settings.
 
 ## File Structure
 ```

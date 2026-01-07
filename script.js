@@ -2411,7 +2411,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function exportToJSON() {
         // Prompt user for filename
-        const filename = prompt("Name your file:", "ani_ranker_backup");
+        const filename = prompt("Name your tierlist:", "my_tierlist");
 
         // If user cancels, stop
         if (filename === null) {
@@ -2460,7 +2460,7 @@ document.addEventListener('DOMContentLoaded', () => {
         link.click();
         URL.revokeObjectURL(url);
 
-        showToast('JSON file saved!', 'success');
+        showToast('Tierlist saved!', 'success');
     }
 
     // Export button event listener
