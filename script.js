@@ -476,6 +476,38 @@ document.addEventListener('DOMContentLoaded', () => {
         pool.forEach(item => poolItems.appendChild(createDraggableImage(item, 'pool')));
     }
 
+    // Rename Custom Image Function
+    function renameCustomImage(item, source) {
+        const currentTitle = item.title || 'Untitled';
+        const newTitle = prompt('Enter new name for this image:', currentTitle);
+
+        if (newTitle === null || newTitle.trim() === '') {
+            return; // User cancelled or entered empty name
+        }
+
+        const trimmedTitle = newTitle.trim();
+
+        // Update the item in the appropriate location
+        if (source === 'pool') {
+            const poolItem = pool.find(i => i.id === item.id);
+            if (poolItem) {
+                poolItem.title = trimmedTitle;
+            }
+        } else if (typeof source === 'object' && source.tierIndex !== undefined) {
+            const tierItem = tiers[source.tierIndex]?.items.find(i => i.id === item.id);
+            if (tierItem) {
+                tierItem.title = trimmedTitle;
+            }
+        }
+
+        // Save state and re-render
+        saveState();
+        renderTiers();
+        renderPool();
+
+        showToast('Image renamed successfully!', 'success');
+    }
+
     function createDraggableImage(item, source) {
         const wrapper = document.createElement('div');
         wrapper.className = 'album group';
@@ -492,6 +524,29 @@ document.addEventListener('DOMContentLoaded', () => {
         tooltip.textContent = item.title;
         wrapper.appendChild(img);
         wrapper.appendChild(tooltip);
+
+        // Check if this is a custom image (local or custom ID)
+        const isCustomImage = String(item.id).startsWith('local-') || String(item.id).startsWith('custom-');
+
+        // Add Rename Button for custom images
+        if (isCustomImage) {
+            const renameBtn = document.createElement('button');
+            renameBtn.className = 'absolute top-1 left-1 bg-black/50 hover:bg-primary text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-all z-10 cursor-pointer shadow-sm';
+            renameBtn.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+            renameBtn.title = "Rename image";
+
+            renameBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                renameCustomImage(item, source);
+            });
+
+            // Stop mousedown/touchstart propagation to prevent dragstart on the button
+            renameBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+            renameBtn.addEventListener('touchstart', (e) => e.stopPropagation());
+
+            wrapper.appendChild(renameBtn);
+        }
 
         // Add Delete Button ONLY for Pool items
         if (source === 'pool') {
